@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 
 export default function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +28,27 @@ export default function LoginForm() {
         return;
       }
 
-      // A full navigation rather than a client push, so the server layout
-      // re-runs and picks up the new session cookie.
-      router.replace('/admin');
-      router.refresh();
+      // A real browser navigation, not a client-side one.
+      //
+      // This used to be router.replace('/admin') followed by router.refresh(),
+      // which deadlocked the first login. replace() is a soft navigation — the
+      // server layout does not re-run with the new cookies — so refresh() was
+      // added to force it, and the two then raced: replace() moved toward
+      // /admin while refresh() re-fetched the route still mounted,
+      // /admin/login, whose server component now saw a valid session and
+      // redirected to /admin, which redirected on to /admin/password for an
+      // account that must change its password. Each hop invalidated the router
+      // cache and started the next. The result was a blank screen and
+      // thousands of RSC requests for /admin/login.
+      //
+      // assign() throws all of that client router state away: one plain
+      // request for /admin, carrying the cookies, resolved entirely on the
+      // server. It is what ChangePasswordForm and signOut already do, and for
+      // the same reason — every auth transition has to be a full load.
+      //
+      // No setPending(false): the page is on its way out, and re-enabling the
+      // button would only invite a second submit during the navigation.
+      window.location.assign('/admin');
     } catch {
       setError('Server nije dostupan. Pokušajte ponovo.');
       setPending(false);
