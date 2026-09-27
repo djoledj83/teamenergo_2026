@@ -6,7 +6,7 @@ import { routing } from "@/i18n/routing";
 import { Link, redirect } from "@/i18n/navigation";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
-import { getService, getServices, mediaUrl, type ServiceSummary } from "@/lib/api/public";
+import { getService, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
 
 /**
@@ -21,17 +21,28 @@ import type { Locale } from "@teamenergo/shared";
  * what search engines treat as duplicate content.
  */
 
-export async function generateStaticParams() {
-  const params: Array<{ locale: string; slug: string }> = [];
-  for (const locale of routing.locales) {
-    // A build with no API reachable produces no static params; the pages are
-    // then rendered on demand instead, which is the correct fallback rather
-    // than a failed build.
-    const { items } = await getServices(locale).catch(() => ({ items: [] as ServiceSummary[] }));
-    for (const service of items) params.push({ locale, slug: service.slug });
-  }
-  return params;
-}
+/**
+ * No generateStaticParams — deliberately.
+ *
+ * There was one, and it fetched the list of slugs so each detail page could be
+ * prerendered. It cannot work in this deployment: the API is a separate
+ * container that does not exist during `docker compose build`, so the fetch
+ * always failed and the function always returned an empty array.
+ *
+ * An empty array is not harmless. Next still treats the route as statically
+ * generated, and serves each request by REGENERATING it — the error context
+ * reads `revalidateReason: "stale"`. That regeneration runs in a static
+ * rendering context, where the root layout's getLocale() has to fall back to
+ * reading request headers, which throws DYNAMIC_SERVER_USAGE. The visitor gets
+ * a 500 and the log shows only a digest, because the failure happens inside
+ * Next before any application code runs — no layout or page ever executes,
+ * which is what makes it so hard to place.
+ *
+ * With no generateStaticParams the route is plainly dynamic (`ƒ` in the build
+ * output), renders per request, and works. Note that `export const dynamic =
+ * "force-dynamic"` does NOT substitute for this: the ISR path is chosen from
+ * the presence of generateStaticParams, before that setting is consulted.
+ */
 
 async function load(locale: string, slug: string) {
   if (!hasLocale(routing.locales, locale)) return null;
