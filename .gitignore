@@ -56,3 +56,10 @@ coverage/
 # repository is right — nothing references them.
 _git-old-history/
 _replaced/
+
+# Database dumps — content and password hashes. Deliberately not a blanket
+# *.sql: apps/api/prisma/migrations/*.sql and scripts/sql/* are source files
+# and must stay in the repository.
+/backup*.sql
+/*.dump
+/backups/
