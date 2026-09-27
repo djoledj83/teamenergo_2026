@@ -41,6 +41,8 @@ export default function MediaLibraryDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,9 +78,19 @@ export default function MediaLibraryDialog({
   async function handleUpload(files: FileList | null) {
     if (!files?.length) return;
     setUploading(true);
+    setUploadCount(files.length);
+    setProgress(0);
     setError(null);
     try {
-      const result = await adminApi.upload<{ items: MediaItem[] }>('media', Array.from(files));
+      // Same helper the standalone Media page uses, so the two agree on what
+      // an upload looks like. It reports real bytes sent, which a plain fetch
+      // cannot: on a phone tether, several photos with no readout is
+      // indistinguishable from a frozen dialog.
+      const result = await adminApi.uploadWithProgress<{ items: MediaItem[] }>(
+        'media',
+        Array.from(files),
+        setProgress,
+      );
       setItems((current) => [...result.items, ...current]);
       if (multiple) {
         setSelected((current) => [...current, ...result.items.map((media) => media.id)]);
@@ -87,6 +99,8 @@ export default function MediaLibraryDialog({
       setError(caught instanceof AdminApiError ? caught.message : 'Otpremanje nije uspelo');
     } finally {
       setUploading(false);
+      setUploadCount(0);
+      setProgress(0);
       if (inputRef.current) inputRef.current.value = '';
     }
   }
@@ -167,6 +181,44 @@ export default function MediaLibraryDialog({
           <p role="alert" className="px-5 py-3 text-sm text-[#ef6b6b] border-b border-ts-border">
             {error}
           </p>
+        )}
+
+        {/* A visible, in-place readout rather than only a greyed-out button.
+            Images are re-encoded to WebP on the server and several megabytes
+            can take a few seconds, during which a dialog that looks idle
+            invites a second click — and a second upload.
+
+            At 100% the bytes are up but sharp is still working, so the bar
+            stops and the label changes rather than sitting full and silent. */}
+        {uploading && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-3 px-5 py-3 border-b border-ts-border bg-ts-surface-2/40"
+          >
+            <Icon
+              name="ArrowUpTrayIcon"
+              size={16}
+              className="text-ts-blue animate-pulse flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-ts-fg mb-1.5">
+                Otpremanje {uploadCount} {uploadCount === 1 ? 'fajla' : 'fajlova'} — {progress}%
+              </p>
+              <div className="h-1.5 rounded-full bg-ts-surface-2 overflow-hidden">
+                <div
+                  data-testid="upload-progress"
+                  className="h-full bg-ts-blue transition-[width] duration-200"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              {progress === 100 && (
+                <p className="text-xs text-ts-muted mt-1.5">
+                  Obrada na serveru — slike se konvertuju u WebP.
+                </p>
+              )}
+            </div>
+          </div>
         )}
 
         {multiple && !loading && items.length > 0 && (
