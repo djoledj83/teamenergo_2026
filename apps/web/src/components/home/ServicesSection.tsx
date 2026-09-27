@@ -144,7 +144,9 @@ function ServiceCard({
               {service.title}
             </h3>
             {service.summary && (
-              <p className="text-ts-muted text-sm leading-relaxed">{service.summary}</p>
+              <p className="text-ts-muted text-sm leading-relaxed line-clamp-3">
+                {service.summary}
+              </p>
             )}
           </div>
 

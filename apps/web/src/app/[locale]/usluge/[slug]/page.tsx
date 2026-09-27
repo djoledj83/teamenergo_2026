@@ -114,7 +114,8 @@ export default async function ServiceDetailPage({
                 {service.title}
               </h1>
               {service.summary && (
-                <p className="text-ts-muted max-w-2xl leading-relaxed text-lg font-light">
+                // Full container width, like the body and the image below.
+                <p className="text-ts-muted leading-relaxed text-lg font-light">
                   {service.summary}
                 </p>
               )}
@@ -171,7 +172,10 @@ export default async function ServiceDetailPage({
 
       {service.body && (
         <section className="px-6 py-16">
-          <div className="max-w-3xl mx-auto">
+          {/* Same width as the image above it, not the narrower reading
+              measure. A column that stops short of the picture it belongs to
+              reads as a mistake rather than as typography. */}
+          <div className="max-w-7xl mx-auto">
             {/* Body is HTML from the admin's rich-text editor. The API
                 sanitises it on write (see apps/api/src/content/rich-text.ts),
                 so what is stored is already safe to inject here. */}

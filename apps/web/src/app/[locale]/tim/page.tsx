@@ -100,7 +100,12 @@ function MemberBody({ member }: { member: TeamMemberEntry }) {
       <div className="p-6 space-y-2">
         <h2 className="font-display text-lg font-bold text-ts-fg">{member.name}</h2>
         {member.role && <p className="text-sm text-ts-red font-semibold">{member.role}</p>}
-        {member.bio && <p className="text-sm text-ts-muted leading-relaxed">{member.bio}</p>}
+        {member.bio && (
+          // Three lines on the card, the whole bio on the member's own page.
+          // Cards sit in a grid, so one long biography would otherwise stretch
+          // its whole row and leave the others with dead space beneath them.
+          <p className="text-sm text-ts-muted leading-relaxed line-clamp-3">{member.bio}</p>
+        )}
 
         {(member.email || member.linkedinUrl) && (
           <div className="flex items-center gap-3 pt-2 text-ts-muted">
