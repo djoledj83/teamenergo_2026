@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "home": "Početna",
+    "menu": "Meni",
+    "close": "Zatvori"
+  },
+  "home": {
+    "servicesEyebrow": "Naše usluge",
+    "servicesHeading": "Šta gradimo i",
+    "servicesHeadingAccent": "napajamo.",
+    "statsEyebrow": "U brojkama",
+    "statsHeading": "Neka brojke",
+    "statsHeadingAccent": "same kažu.",
+    "statsCtaHeading": "Spremni za sledeći projekat?",
+    "statsCtaBody": "Razgovarajte sa našim inženjerskim timom o vašoj infrastrukturi.",
+    "statsCtaButton": "Pošaljite upit",
+    "projectsEyebrow": "Najznačajniji projekti",
+    "projectsHeading": "Reference iz",
+    "projectsHeadingAccent": "prakse.",
+    "testimonialsEyebrow": "Šta nas izdvaja",
+    "clientsHeading": "Sarađujemo sa"
+  },
+  "service": {
+    "readMore": "Saznajte više"
+  },
+  "common": {
+    "language": "Jezik"
+  }
+}

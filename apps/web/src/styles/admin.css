@@ -1,0 +1,153 @@
+/* ── Admin panel ──────────────────────────────────────────────────────
+   Shares the site's palette so the CMS feels like part of the product,
+   but uses a denser, more neutral layout suited to data entry.
+   ------------------------------------------------------------------ */
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.admin-input,
+.admin-textarea,
+.admin-select {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  color: var(--color-fg);
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-input::placeholder,
+.admin-textarea::placeholder {
+  color: var(--color-muted-2);
+}
+
+.admin-input:focus,
+.admin-textarea:focus,
+.admin-select:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px rgba(45, 125, 210, 0.15);
+}
+
+.admin-input[aria-invalid='true'],
+.admin-textarea[aria-invalid='true'] {
+  border-color: var(--color-red);
+}
+
+.admin-textarea {
+  min-height: 7rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.admin-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  margin-bottom: 0.4rem;
+}
+
+.admin-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+/* Screen headings. Repeated on every admin screen, so they live here rather
+   than as the same four utility classes copied into each one. */
+.admin-title {
+  font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-fg);
+}
+
+.admin-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin-top: 0.25rem;
+}
+
+.admin-error {
+  font-size: 0.875rem;
+  color: #ef6b6b;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-primary {
+  background: var(--color-blue);
+  color: #fff;
+}
+.admin-btn-primary:not(:disabled):hover {
+  background: #3a8ee0;
+}
+
+.admin-btn-ghost {
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+.admin-btn-ghost:not(:disabled):hover {
+  color: var(--color-fg);
+  border-color: var(--color-muted-2);
+}
+
+.admin-btn-danger {
+  border: 1px solid rgba(212, 41, 41, 0.4);
+  color: #ef6b6b;
+}
+.admin-btn-danger:not(:disabled):hover {
+  background: rgba(212, 41, 41, 0.1);
+}
+
+/* ── Rich text output ── */
+.admin-prose {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+.admin-prose h2 { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
+.admin-prose h3 { font-size: 1.0625rem; font-weight: 700; margin: 1rem 0 0.4rem; }
+.admin-prose p { margin: 0.6rem 0; }
+.admin-prose ul { list-style: disc; padding-left: 1.4rem; margin: 0.6rem 0; }
+.admin-prose ol { list-style: decimal; padding-left: 1.4rem; margin: 0.6rem 0; }
+.admin-prose a { color: var(--color-blue); text-decoration: underline; }
+.admin-prose strong { font-weight: 700; }
+
+/* ProseMirror needs an explicit min height or an empty editor collapses. */
+.admin-editor .ProseMirror {
+  min-height: 12rem;
+  outline: none;
+}
+.admin-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-muted-2);
+  pointer-events: none;
+  height: 0;
+}

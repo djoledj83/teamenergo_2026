@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Environment — never commit real secrets.
+# NOTE: .gitignore only applies to files git is not already tracking. If a
+# secret was ever committed, ignoring it afterwards changes nothing — it
+# stays in the history. Check with: git ls-files | grep env
+#
+# .env.example is excluded too, by choice. It holds no secrets, only variable
+# names and placeholders, so a clone of this repo carries no record of which
+# variables the app needs — keep your own copy to configure a new server
+# from. Remove the .env.example line below to put it back in the repo.
+.env
+.env.*
+.env.example
+
+# Uploaded media (bind-mounted volume)
+uploads/
+
+# Prisma local artifacts
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+# Local leftovers, kept out of the repository rather than deleted.
+#
+# _git-old-history/ is the previous .git directory, set aside rather than
+# removed when this repository was re-initialised: the old history had .env
+# committed in it, and .gitignore cannot retract a file git is already
+# tracking. The new history never contained it.
+#
+# Both of these are safe to delete from disk once you are satisfied the new
+# repository is right — nothing references them.
+_git-old-history/
+_replaced/

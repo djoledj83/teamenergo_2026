@@ -1,0 +1,41 @@
+{
+  "name": "teamenergo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Teamenergo — company website with admin CMS",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "dotenv -e .env -- node scripts/setup.mjs",
+    "dev": "concurrently -n shared,api,web -c gray,magenta,cyan \"npm:dev:shared\" \"npm:dev:api\" \"npm:dev:web\"",
+    "predev": "npm run build --workspace=@teamenergo/shared",
+    "dev:shared": "npm run dev --workspace=@teamenergo/shared",
+    "dev:api": "dotenv -e .env -- npm run dev --workspace=@teamenergo/api",
+    "dev:web": "dotenv -e .env -- npm run dev --workspace=@teamenergo/web",
+    "build": "npm run build --workspace=@teamenergo/shared && npm run build --workspace=@teamenergo/api && npm run build --workspace=@teamenergo/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,css,md,json}\"",
+    "doctor": "dotenv -e .env -- node scripts/doctor.mjs",
+    "db:baseline": "dotenv -e .env -- node scripts/db-baseline.mjs",
+    "db:migrate": "dotenv -e .env -- npm run db:migrate --workspace=@teamenergo/api",
+    "db:deploy": "dotenv -e .env -- npm run db:deploy --workspace=@teamenergo/api",
+    "predb:seed": "npm run build --workspace=@teamenergo/shared",
+    "db:seed": "dotenv -e .env -- npm run db:seed --workspace=@teamenergo/api",
+    "db:reset-admin": "dotenv -e .env -- node scripts/reset-admin.mjs",
+    "db:studio": "dotenv -e .env -- npm run db:studio --workspace=@teamenergo/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv-cli": "^8.0.0",
+    "png-to-ico": "^3.0.2",
+    "prettier": "^3.5.3",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

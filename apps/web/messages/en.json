@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "home": "Home",
+    "menu": "Menu",
+    "close": "Close"
+  },
+  "home": {
+    "servicesEyebrow": "Our services",
+    "servicesHeading": "What we build and",
+    "servicesHeadingAccent": "power.",
+    "statsEyebrow": "By the numbers",
+    "statsHeading": "Let the numbers",
+    "statsHeadingAccent": "speak.",
+    "statsCtaHeading": "Ready for your next project?",
+    "statsCtaBody": "Talk to our engineering team about your infrastructure.",
+    "statsCtaButton": "Send an enquiry",
+    "projectsEyebrow": "Selected projects",
+    "projectsHeading": "Engineering in",
+    "projectsHeadingAccent": "practice.",
+    "testimonialsEyebrow": "What sets us apart",
+    "clientsHeading": "We work with"
+  },
+  "service": {
+    "readMore": "Read more"
+  },
+  "common": {
+    "language": "Language"
+  }
+}

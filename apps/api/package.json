@@ -1,0 +1,58 @@
+{
+  "name": "@teamenergo/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint src prisma",
+    "type-check": "tsc -p tsconfig.check.json",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@teamenergo/shared": "*",
+    "argon2": "^0.41.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "prisma": "^6.19.3",
+    "sanitize-html": "^2.17.7",
+    "sharp": "^0.35.4",
+    "tsx": "^4.19.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^22.10.5",
+    "@types/sanitize-html": "^2.16.1",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.18.0",
+    "pino-pretty": "^13.0.0",
+    "supertest": "^7.3.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.29.0",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,113 @@
+# Teamenergo — production stack.
+#
+# Two containers. PostgreSQL is NOT one of them: it runs natively on the host
+# (port 5433 on Contabo, 5432 on a typical laptop) and is shared with other
+# services on that machine, so this stack must not own it, configure it, or
+# restart it.
+#
+# Only `web` is published, and only on the loopback interface — nginx on the
+# host is what the internet talks to. The API is reachable solely on this
+# stack's internal network.
+#
+# Every name here is prefixed `teamenergo`, so this can be brought up and torn
+# down beside other compose projects on the same box without touching them.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: teamenergo-api
+    restart: unless-stopped
+    extra_hosts:
+      # Lets the container reach a service listening on the host — here, the
+      # host's PostgreSQL. Inside a container `localhost` is the container
+      # itself, so a DATABASE_URL pointing at localhost connects to nothing.
+      - "host.docker.internal:host-gateway"
+    environment:
+      NODE_ENV: production
+      API_PORT: ${API_PORT:-4000}
+      # Taken whole from .env rather than assembled from parts.
+      #
+      # The previous version built this string from POSTGRES_USER/PASSWORD/DB,
+      # which meant a password containing @ : / ? # [ ] or a space produced a
+      # malformed URL with no way to escape it — compose cannot percent-encode.
+      # Passing the finished URL puts that back in your hands, and lets you add
+      # Prisma's pool settings, which the assembled form had no room for.
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      WEB_INTERNAL_URL: http://web:${WEB_PORT:-3000}
+      UPLOAD_DIR: /app/uploads
+      MAX_IMAGE_MB: ${MAX_IMAGE_MB:-3}
+      MAX_DOCUMENT_MB: ${MAX_DOCUMENT_MB:-10}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      INQUIRY_NOTIFY_EMAIL: ${INQUIRY_NOTIFY_EMAIL:-}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-sr}
+      SUPPORTED_LOCALES: ${SUPPORTED_LOCALES:-sr,en}
+    volumes:
+      # The container runs as uid 1001, so this folder on the host has to be
+      # writable by that uid or every upload fails with EACCES. On a fresh
+      # server:  mkdir -p uploads && sudo chown -R 1001:1001 uploads
+      - ./uploads:/app/uploads
+    expose:
+      - "${API_PORT:-4000}"
+    healthcheck:
+      # /health/ready queries the database, so "healthy" means the API can
+      # actually serve — not merely that the process started. Node 22 has
+      # fetch built in, so this needs nothing installed in the image.
+      test:
+        - CMD
+        - node
+        - -e
+        - |
+          fetch('http://127.0.0.1:' + (process.env.API_PORT || 4000) + '/health/ready')
+            .then(r => process.exit(r.ok ? 0 : 1))
+            .catch(() => process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      # Generous: the first boot runs migrations and the seed before listening.
+      start_period: 90s
+    networks:
+      - teamenergo
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    container_name: teamenergo-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${WEB_PORT:-3000}
+      API_INTERNAL_URL: http://api:${API_PORT:-4000}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-sr}
+      SUPPORTED_LOCALES: ${SUPPORTED_LOCALES:-sr,en}
+    ports:
+      # Loopback only. nginx on the host proxies to this; nothing reaches the
+      # container from the internet directly, so there is no way to bypass TLS
+      # or the proxy's request limits. Pick a WEB_PORT that is free on the
+      # machine — a box running several stacks will already have 3000 taken.
+      - "127.0.0.1:${WEB_PORT:-3000}:${WEB_PORT:-3000}"
+    networks:
+      - teamenergo
+
+networks:
+  teamenergo:
+    name: teamenergo
+    driver: bridge

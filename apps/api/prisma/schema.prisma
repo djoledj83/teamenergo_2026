@@ -1,0 +1,755 @@
+// Teamenergo — database schema
+//
+// ─────────────────────────────────────────────────────────────────────────
+// Multilingual pattern
+//
+// Every translatable entity is a PAIR of tables:
+//
+//   Service              base table — images, ordering, publish state, dates
+//   ServiceTranslation   copy — title, body, slug, SEO, keyed by locale
+//
+// Two constraints carry the design on every translation table:
+//   @@unique([<parent>Id, locale])  one translation per entity per language
+//   @@unique([locale, slug])        slugs unique WITHIN a language, so
+//                                   /usluge/energetika and /services/energy
+//                                   coexist and cannot collide
+//
+// `locale` is a plain indexed column rather than a foreign key to Locale.
+// A real FK would require a named back-relation on Locale for all ~18
+// translation tables, which makes that model unreadable for very little
+// gain: the API validates every locale against the Zod enum in
+// packages/shared before it reaches Prisma. The Locale table exists to carry
+// metadata the admin needs (which languages are active, which is default).
+//
+// Adding a language is: INSERT a Locale row, add it to LOCALES in
+// packages/shared, enter the content. No migration.
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// System
+// ═════════════════════════════════════════════════════════════════════════
+
+enum AdminRole {
+  OWNER
+  EDITOR
+}
+
+enum InquiryStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+/// Active content languages. Drives the language tabs in the admin UI.
+model Locale {
+  code      String  @id @db.VarChar(5)
+  name      String
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  @@map("locale")
+}
+
+model AdminUser {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  name               String
+  role               AdminRole @default(EDITOR)
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  uploads       Media[]        @relation("MediaUploadedBy")
+  posts         Post[]         @relation("PostAuthor")
+
+  @@map("admin_user")
+}
+
+/// Rotating refresh tokens.
+///
+/// The access JWT stays stateless and short-lived; this table is what makes
+/// revocation possible. Deleting a user's rows logs them out everywhere
+/// within one access-token lifetime, which a bare JWT cannot do.
+model RefreshToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  adminUserId String
+  /// Rotation chain. Replaying a spent token revokes the entire family.
+  familyId    String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  revokedAt   DateTime?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_token")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String?
+  action      String
+  entity      String
+  entityId    String?
+  diff        Json?
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  adminUser AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+/// Key/value site configuration: phone, email, address, social URLs, map
+/// coordinates. Deliberately not translated — none of these values differ
+/// by language. Translatable page copy belongs in PageBlock instead.
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("setting")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Media
+// ═════════════════════════════════════════════════════════════════════════
+
+/// Central media library. Every image reference in the system is a foreign
+/// key to this table — no external hotlinks.
+model Media {
+  id           String   @id @default(cuid())
+  filename     String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  /// Path relative to UPLOAD_DIR.
+  path         String
+  /// Resized renditions produced by sharp at upload time: [{ w, path }].
+  /// Derived data that is never queried, so JSON is the right shape here.
+  variants     Json?
+  folder       String?
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  uploadedBy   AdminUser?         @relation("MediaUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  translations MediaTranslation[]
+
+  serviceImages      Service[]        @relation("ServiceImage")
+  projectCovers      Project[]        @relation("ProjectCover")
+  projectImages      ProjectImage[]   @relation("ProjectImageMedia")
+  teamPhotos         TeamMember[]     @relation("TeamMemberPhoto")
+  postCovers         Post[]           @relation("PostCover")
+  albumCovers        GalleryAlbum[]   @relation("GalleryAlbumCover")
+  galleryItems       GalleryItem[]    @relation("GalleryItemMedia")
+  testimonialAvatars Testimonial[]    @relation("TestimonialAvatar")
+  clientLogos        Client[]         @relation("ClientLogo")
+  pageBlockImages    PageBlock[]      @relation("PageBlockImage")
+  ogImages           PageTranslation[] @relation("PageOgImage")
+
+  @@index([folder])
+  @@index([createdAt])
+  @@map("media")
+}
+
+model MediaTranslation {
+  id      String  @id @default(cuid())
+  mediaId String
+  locale  String  @db.VarChar(5)
+  alt     String?
+  caption String?
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, locale])
+  @@index([locale])
+  @@map("media_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Services — Usluge
+// ═════════════════════════════════════════════════════════════════════════
+
+model Service {
+  id          String   @id @default(cuid())
+  /// Heroicon component name, e.g. "BoltIcon".
+  iconName    String?
+  /// Design accent: "amber" | "blue" | "red".
+  accent      String?
+  imageId     String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  image        Media?               @relation("ServiceImage", fields: [imageId], references: [id], onDelete: SetNull)
+  translations ServiceTranslation[]
+  stats        ServiceStat[]
+  projects     Project[]
+  inquiries    Inquiry[]
+
+  @@index([isPublished, sortOrder])
+  @@map("service")
+}
+
+model ServiceTranslation {
+  id             String  @id @default(cuid())
+  serviceId      String
+  locale         String  @db.VarChar(5)
+  slug           String
+  title          String
+  category       String?
+  summary        String?
+  body           String? @db.Text
+  seoTitle       String?
+  seoDescription String?
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("service_translation")
+}
+
+/// The figures shown on a service card, e.g. "3,500+ km" / "Lines Built".
+/// The value is language-independent; only the label is translated.
+model ServiceStat {
+  id        String @id @default(cuid())
+  serviceId String
+  value     String
+  sortOrder Int    @default(0)
+
+  service      Service                  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  translations ServiceStatTranslation[]
+
+  @@index([serviceId, sortOrder])
+  @@map("service_stat")
+}
+
+model ServiceStatTranslation {
+  id            String @id @default(cuid())
+  serviceStatId String
+  locale        String @db.VarChar(5)
+  label         String
+
+  serviceStat ServiceStat @relation(fields: [serviceStatId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceStatId, locale])
+  @@index([locale])
+  @@map("service_stat_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Projects — Reference
+// ═════════════════════════════════════════════════════════════════════════
+
+model Project {
+  id           String    @id @default(cuid())
+  serviceId    String?
+  coverImageId String?
+  accent       String?
+  year         Int?
+  completedAt  DateTime?
+  isFeatured   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  isPublished  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  service      Service?             @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  coverImage   Media?               @relation("ProjectCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  translations ProjectTranslation[]
+  metrics      ProjectMetric[]
+  images       ProjectImage[]
+
+  @@index([isPublished, sortOrder])
+  @@index([serviceId])
+  @@map("project")
+}
+
+model ProjectTranslation {
+  id             String  @id @default(cuid())
+  projectId      String
+  locale         String  @db.VarChar(5)
+  slug           String
+  title          String
+  location       String?
+  tag            String?
+  summary        String?
+  body           String? @db.Text
+  seoTitle       String?
+  seoDescription String?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("project_translation")
+}
+
+model ProjectMetric {
+  id        String @id @default(cuid())
+  projectId String
+  value     String
+  sortOrder Int    @default(0)
+
+  project      Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  translations ProjectMetricTranslation[]
+
+  @@index([projectId, sortOrder])
+  @@map("project_metric")
+}
+
+model ProjectMetricTranslation {
+  id              String @id @default(cuid())
+  projectMetricId String
+  locale          String @db.VarChar(5)
+  label           String
+
+  projectMetric ProjectMetric @relation(fields: [projectMetricId], references: [id], onDelete: Cascade)
+
+  @@unique([projectMetricId, locale])
+  @@index([locale])
+  @@map("project_metric_translation")
+}
+
+/// Per-project image gallery, ordered.
+model ProjectImage {
+  id        String @id @default(cuid())
+  projectId String
+  mediaId   String
+  sortOrder Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  media   Media   @relation("ProjectImageMedia", fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, mediaId])
+  @@index([projectId, sortOrder])
+  @@map("project_image")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Team — Tim
+// ═════════════════════════════════════════════════════════════════════════
+
+model TeamMember {
+  id          String   @id @default(cuid())
+  photoId     String?
+  email       String?
+  phone       String?
+  linkedinUrl String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  photo        Media?                  @relation("TeamMemberPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+  translations TeamMemberTranslation[]
+
+  @@index([isPublished, sortOrder])
+  @@map("team_member")
+}
+
+model TeamMemberTranslation {
+  id           String  @id @default(cuid())
+  teamMemberId String
+  locale       String  @db.VarChar(5)
+  /// Stored per locale because names transliterate between scripts
+  /// (Aleksandar Radivojević / Aleksandar Radivojevic).
+  name         String
+  /// Nullable only so the column could be added to a database that already
+  /// had rows; the seed backfills it and the admin derives one from the name
+  /// on every save, so in practice it is always set.
+  slug         String?
+  role         String?
+  bio          String? @db.Text
+
+  teamMember TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([teamMemberId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("team_member_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// News — Vesti
+// ═════════════════════════════════════════════════════════════════════════
+
+model Post {
+  id           String    @id @default(cuid())
+  coverImageId String?
+  authorId     String?
+  publishedAt  DateTime?
+  isPublished  Boolean   @default(false)
+  isFeatured   Boolean   @default(false)
+  viewCount    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  coverImage   Media?            @relation("PostCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  author       AdminUser?        @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  translations PostTranslation[]
+  categories   PostCategory[]    @relation("PostToCategory")
+
+  @@index([isPublished, publishedAt])
+  @@map("post")
+}
+
+model PostTranslation {
+  id             String  @id @default(cuid())
+  postId         String
+  locale         String  @db.VarChar(5)
+  slug           String
+  title          String
+  excerpt        String? @db.Text
+  body           String? @db.Text
+  seoTitle       String?
+  seoDescription String?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("post_translation")
+}
+
+model PostCategory {
+  id        String @id @default(cuid())
+  sortOrder Int    @default(0)
+
+  translations PostCategoryTranslation[]
+  posts        Post[]                    @relation("PostToCategory")
+
+  @@map("post_category")
+}
+
+model PostCategoryTranslation {
+  id             String  @id @default(cuid())
+  postCategoryId String
+  locale         String  @db.VarChar(5)
+  slug           String
+  name           String
+  description    String?
+
+  postCategory PostCategory @relation(fields: [postCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postCategoryId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("post_category_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Gallery — Galerija
+// ═════════════════════════════════════════════════════════════════════════
+
+model GalleryAlbum {
+  id           String   @id @default(cuid())
+  coverImageId String?
+  sortOrder    Int      @default(0)
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  coverImage   Media?                    @relation("GalleryAlbumCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  translations GalleryAlbumTranslation[]
+  items        GalleryItem[]
+
+  @@index([isPublished, sortOrder])
+  @@map("gallery_album")
+}
+
+model GalleryAlbumTranslation {
+  id             String  @id @default(cuid())
+  galleryAlbumId String
+  locale         String  @db.VarChar(5)
+  slug           String
+  title          String
+  description    String? @db.Text
+
+  galleryAlbum GalleryAlbum @relation(fields: [galleryAlbumId], references: [id], onDelete: Cascade)
+
+  @@unique([galleryAlbumId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+  @@map("gallery_album_translation")
+}
+
+model GalleryItem {
+  id             String @id @default(cuid())
+  galleryAlbumId String
+  mediaId        String
+  sortOrder      Int    @default(0)
+
+  galleryAlbum GalleryAlbum             @relation(fields: [galleryAlbumId], references: [id], onDelete: Cascade)
+  media        Media                    @relation("GalleryItemMedia", fields: [mediaId], references: [id], onDelete: Cascade)
+  translations GalleryItemTranslation[]
+
+  @@unique([galleryAlbumId, mediaId])
+  @@index([galleryAlbumId, sortOrder])
+  @@map("gallery_item")
+}
+
+model GalleryItemTranslation {
+  id            String  @id @default(cuid())
+  galleryItemId String
+  locale        String  @db.VarChar(5)
+  caption       String?
+
+  galleryItem GalleryItem @relation(fields: [galleryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([galleryItemId, locale])
+  @@index([locale])
+  @@map("gallery_item_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Social proof — testimonials, clients, stats
+// ═════════════════════════════════════════════════════════════════════════
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  avatarId    String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  avatar       Media?                   @relation("TestimonialAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  translations TestimonialTranslation[]
+
+  @@index([isPublished, sortOrder])
+  @@map("testimonial")
+}
+
+model TestimonialTranslation {
+  id            String  @id @default(cuid())
+  testimonialId String
+  locale        String  @db.VarChar(5)
+  quote         String  @db.Text
+  name          String
+  role          String?
+  company       String?
+
+  testimonial Testimonial @relation(fields: [testimonialId], references: [id], onDelete: Cascade)
+
+  @@unique([testimonialId, locale])
+  @@index([locale])
+  @@map("testimonial_translation")
+}
+
+/// Client / partner logos for the ticker bar. Company names are proper nouns
+/// and are not translated, so there is no translation table here.
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  logoId      String?
+  websiteUrl  String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logo Media? @relation("ClientLogo", fields: [logoId], references: [id], onDelete: SetNull)
+
+  @@index([isPublished, sortOrder])
+  @@map("client")
+}
+
+/// The animated count-up figures on the homepage.
+model Stat {
+  id          String   @id @default(cuid())
+  value       Decimal  @db.Decimal(12, 2)
+  prefix      String?
+  suffix      String?
+  isDecimal   Boolean  @default(false)
+  iconName    String?
+  accent      String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  translations StatTranslation[]
+
+  @@index([isPublished, sortOrder])
+  @@map("stat")
+}
+
+model StatTranslation {
+  id          String  @id @default(cuid())
+  statId      String
+  locale      String  @db.VarChar(5)
+  label       String
+  description String?
+
+  stat Stat @relation(fields: [statId], references: [id], onDelete: Cascade)
+
+  @@unique([statId, locale])
+  @@index([locale])
+  @@map("stat_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Page structure
+// ═════════════════════════════════════════════════════════════════════════
+
+/// One row per site page. `key` is referenced in code, never edited by an
+/// admin, so routing cannot be broken from the CMS.
+model Page {
+  key       String   @id
+  updatedAt DateTime @updatedAt
+
+  translations PageTranslation[]
+  blocks       PageBlock[]
+
+  @@map("page")
+}
+
+model PageTranslation {
+  id             String  @id @default(cuid())
+  pageKey        String
+  locale         String  @db.VarChar(5)
+  title          String
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?
+
+  page    Page   @relation(fields: [pageKey], references: [key], onDelete: Cascade)
+  ogImage Media? @relation("PageOgImage", fields: [ogImageId], references: [id], onDelete: SetNull)
+
+  @@unique([pageKey, locale])
+  @@index([locale])
+  @@map("page_translation")
+}
+
+/// An editable content block on a page — hero, intro, call-to-action.
+/// `blockKey` is what the page component looks up, so it is code-owned.
+model PageBlock {
+  id        String   @id @default(cuid())
+  pageKey   String
+  blockKey  String
+  imageId   String?
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  page         Page                   @relation(fields: [pageKey], references: [key], onDelete: Cascade)
+  image        Media?                 @relation("PageBlockImage", fields: [imageId], references: [id], onDelete: SetNull)
+  translations PageBlockTranslation[]
+
+  @@unique([pageKey, blockKey])
+  @@index([pageKey, sortOrder])
+  @@map("page_block")
+}
+
+model PageBlockTranslation {
+  id          String  @id @default(cuid())
+  pageBlockId String
+  locale      String  @db.VarChar(5)
+  eyebrow     String?
+  heading     String?
+  subheading  String?
+  body        String? @db.Text
+  ctaLabel    String?
+  ctaHref     String?
+
+  pageBlock PageBlock @relation(fields: [pageBlockId], references: [id], onDelete: Cascade)
+
+  @@unique([pageBlockId, locale])
+  @@index([locale])
+  @@map("page_block_translation")
+}
+
+/// Site navigation. Replaces the hardcoded array that currently ships four
+/// links pointing at anchors that do not all exist.
+model NavItem {
+  id         String   @id @default(cuid())
+  parentId   String?
+  /// "header" | "footer"
+  location   String   @default("header")
+  href       String
+  sortOrder  Int      @default(0)
+  isVisible  Boolean  @default(true)
+  opensInNew Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  parent       NavItem?              @relation("NavItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     NavItem[]             @relation("NavItemChildren")
+  translations NavItemTranslation[]
+
+  @@index([location, sortOrder])
+  @@map("nav_item")
+}
+
+model NavItemTranslation {
+  id        String @id @default(cuid())
+  navItemId String
+  locale    String @db.VarChar(5)
+  label     String
+
+  navItem NavItem @relation(fields: [navItemId], references: [id], onDelete: Cascade)
+
+  @@unique([navItemId, locale])
+  @@index([locale])
+  @@map("nav_item_translation")
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Contact form submissions
+// ═════════════════════════════════════════════════════════════════════════
+
+model Inquiry {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  serviceId String?
+  message   String        @db.Text
+  locale    String        @db.VarChar(5)
+  status    InquiryStatus @default(NEW)
+  ip        String?
+  userAgent String?
+  notes     String?       @db.Text
+  readAt    DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@map("inquiry")
+}
