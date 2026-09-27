@@ -35,13 +35,15 @@ const nextConfig = {
   // NOTE: this resolution fix is webpack-only. Running `next dev --turbo`
   // would fail to resolve @teamenergo/shared until Turbopack config lands in
   // a newer Next version, so stick to the default dev server.
-  async rewrites() {
-    // Uploaded media lives with the API, which is not publicly routable.
-    // Proxying here means one URL shape in dev and in production, and
-    // next/image caches the optimised output so the origin is hit rarely.
-    const apiUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
-    return [{ source: '/uploads/:path*', destination: `${apiUrl}/uploads/:path*` }];
-  },
+  // NOTE: /uploads/* is NOT a rewrite. It is a route handler, at
+  // src/app/uploads/[...path]/route.ts.
+  //
+  // It was a rewrite, and that could not work in production: Next resolves
+  // rewrites at build time and freezes them into the standalone server, while
+  // API_INTERNAL_URL only exists at run time. The destination was therefore
+  // baked as the fallback localhost:4000 — the web container itself — and
+  // every uploaded image failed with ECONNREFUSED. Anything that has to read
+  // a deployment address belongs in a request-time code path, not here.
 };
 
 export default withNextIntl(nextConfig);
