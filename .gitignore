@@ -21,8 +21,14 @@ dist/
 .env.*
 .env.example
 
-# Uploaded media (bind-mounted volume)
-uploads/
+# Uploaded media (bind-mounted volume).
+#
+# Anchored with a leading slash so it means THIS directory only. Unanchored,
+# `uploads/` matches a directory of that name at any depth — which silently
+# excluded apps/web/src/app/uploads/, the route handler that serves media.
+# `git add -A` skipped it without a word, the commit looked clean, and the
+# server built an app with no /uploads route at all.
+/uploads/
 
 # Prisma local artifacts
 apps/api/prisma/*.db
