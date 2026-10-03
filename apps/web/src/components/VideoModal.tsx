@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/AppIcon";
+import { parseVideoEmbed } from "@teamenergo/shared";
 
 /**
  * A button that opens the company video in a modal.
@@ -12,54 +13,10 @@ import Icon from "@/components/ui/AppIcon";
  * a film most of them will not watch.
  *
  * The embed URL is built from the parsed video id, never from the stored
- * string. The API already restricts the field to YouTube and Vimeo hosts;
- * this is the second half of the same rule — if the link cannot be parsed
- * into an id, nothing is rendered rather than something being framed.
+ * string, by the same function the API validates with — so a link that
+ * saved is a link that plays, and there is one rule rather than two that
+ * can drift apart.
  */
-
-interface Embed {
-  src: string;
-  title: string;
-}
-
-export function toEmbed(url: string | null | undefined): Embed | null {
-  if (!url) return null;
-
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
-  if (parsed.protocol !== "https:") return null;
-
-  const host = parsed.hostname.replace(/^www\.|^m\./, "");
-
-  // youtu.be/<id> · youtube.com/watch?v=<id> · /embed/<id> · /shorts/<id>
-  if (host === "youtu.be" || host === "youtube.com" || host === "youtube-nocookie.com") {
-    const fromPath = parsed.pathname.split("/").filter(Boolean);
-    const id =
-      host === "youtu.be"
-        ? fromPath[0]
-        : parsed.searchParams.get("v") ??
-          (fromPath[0] === "embed" || fromPath[0] === "shorts" ? fromPath[1] : undefined);
-
-    if (!id || !/^[\w-]{6,20}$/.test(id)) return null;
-    // nocookie: no tracking cookie until the visitor actually plays.
-    return {
-      src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`,
-      title: "YouTube video",
-    };
-  }
-
-  if (host === "vimeo.com" || host === "player.vimeo.com") {
-    const id = parsed.pathname.split("/").filter(Boolean).pop();
-    if (!id || !/^\d{6,12}$/.test(id)) return null;
-    return { src: `https://player.vimeo.com/video/${id}?autoplay=1`, title: "Vimeo video" };
-  }
-
-  return null;
-}
 
 export default function VideoModal({
   url,
@@ -70,7 +27,7 @@ export default function VideoModal({
 }) {
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
-  const embed = toEmbed(url);
+  const embed = parseVideoEmbed(url, { autoplay: true });
 
   // showModal() rather than an `open` attribute: it is what puts the dialog
   // in the top layer, traps focus, and makes Escape work without a key

@@ -52,7 +52,10 @@ export default async function TeamPage({ params }: { params: Promise<{ locale: s
 
       {team.length > 0 && (
         <section className="py-16 px-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Four across on a wide screen rather than three, which makes each
+              card — and so each photo, since its height follows the width
+              through the aspect ratio — about a quarter smaller. */}
+          <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {team.map((member) => (
               <Member key={member.id} member={member} />
             ))}

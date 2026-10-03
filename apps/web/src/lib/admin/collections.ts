@@ -270,6 +270,13 @@ export const ADMIN_COLLECTIONS: AdminCollection[] = [
     labelSingular: 'Dokument',
     icon: 'DocumentCheckIcon',
     group: 'site',
+    // Without `publishable` the form renders no publish toggle, so the payload
+    // never carries isPublished, the API falls back to false, and the footer —
+    // which shows published rows only — stays empty however many documents
+    // were added. Without `sortable` the footer's order cannot be changed.
+    sortable: true,
+    publishable: true,
+    emptyHint: 'Dodajte ISO oznake, sertifikate i dokumente za preuzimanje.',
     columns: [
       { key: 'logo', label: '', type: 'image' },
       { key: 'label', label: 'Naziv', translated: true },

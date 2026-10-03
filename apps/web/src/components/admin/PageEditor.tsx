@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DEFAULT_LOCALE, LOCALE_LABELS, type Locale } from '@teamenergo/shared';
 import Icon from '@/components/ui/AppIcon';
 import { adminApi, AdminApiError } from '@/lib/admin/api';
+import { parseVideoEmbed, VIDEO_URL_HELP } from '@teamenergo/shared';
 import { ADMIN_LOCALES, type FieldConfig } from '@/lib/admin/collections';
 import FormField, { type FieldValue } from './FormField';
 
@@ -341,6 +342,18 @@ function Section({
               }}
               disabled={saving}
             />
+            {/* A link saved before this check existed, or pasted from a
+                channel or playlist page, is accepted by the field and then
+                renders nothing on the site. Saying so here is the difference
+                between a two-second fix and an afternoon wondering why the
+                button never appeared. */}
+            {typeof videoUrl === 'string' &&
+              videoUrl.trim() !== '' &&
+              parseVideoEmbed(videoUrl) === null && (
+                <p role="alert" className="mt-1.5 text-xs text-[#ef6b6b] leading-relaxed">
+                  {VIDEO_URL_HELP}
+                </p>
+              )}
           </div>
         )}
       </div>

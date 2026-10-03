@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { translationsRecord } from '@teamenergo/shared';
+import { parseVideoEmbed, VIDEO_URL_HELP } from '@teamenergo/shared';
 import { prisma } from '../db.js';
 import { richText } from '../content/rich-text.js';
 import { HttpError } from '../errors.js';
@@ -45,40 +46,21 @@ const updatePageSchema = z.object({
 });
 
 /**
- * A YouTube or Vimeo address, and nothing else.
+ * A YouTube or Vimeo address that actually resolves to a video.
  *
- * The value ends up inside an iframe src. Accepting any URL would let an
- * editor — or anyone with a stolen editor session — embed an arbitrary origin
- * in a page of the public site, which is a framed-content hole of exactly the
- * kind the rich-text sanitiser exists to close. An allowlist of hosts is the
- * check; the player itself parses the id out of whatever shape of link this
- * is and builds its own embed URL, so nothing pasted here is ever used
- * verbatim as a src.
+ * Two things have to hold. The value ends up inside an iframe src, so an
+ * arbitrary origin here would be a framed-content hole on every page of the
+ * public site. And the player has to be able to find an id in it — a channel
+ * or playlist URL passes a host check and then renders nothing, silently,
+ * which is a worse outcome than a rejected save.
+ *
+ * parseVideoEmbed answers both, and the site uses the same function to build
+ * the embed, so what the API accepts is exactly what the player can show.
  */
-const VIDEO_HOSTS = new Set([
-  'youtube.com',
-  'www.youtube.com',
-  'm.youtube.com',
-  'youtu.be',
-  'youtube-nocookie.com',
-  'www.youtube-nocookie.com',
-  'vimeo.com',
-  'www.vimeo.com',
-  'player.vimeo.com',
-]);
-
 const videoUrl = z
   .string()
   .max(400)
-  .refine((value) => {
-    if (value.trim() === '') return true;
-    try {
-      const url = new URL(value);
-      return url.protocol === 'https:' && VIDEO_HOSTS.has(url.hostname);
-    } catch {
-      return false;
-    }
-  }, 'Podržani su samo YouTube i Vimeo linkovi (https)')
+  .refine((value) => value.trim() === '' || parseVideoEmbed(value) !== null, VIDEO_URL_HELP)
   .transform((value) => (value.trim() === '' ? null : value.trim()))
   .nullable()
   .optional();

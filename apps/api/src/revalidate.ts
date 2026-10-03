@@ -47,6 +47,11 @@ const TAGS_BY_ENTITY: Record<string, RevalidateTag[]> = {
   PageBlock: ['pages', 'home'],
   NavItem: ['bootstrap'],
   Setting: ['bootstrap'],
+  // The footer rides on bootstrap, so a certificate or download saved in the
+  // admin only appears once that tag is invalidated. An entity missing from
+  // this map revalidates nothing at all and the editor waits out the hour
+  // cache wondering why the save did not take.
+  SiteDocument: ['bootstrap'],
   Media: Object.values(REVALIDATE_TAGS),
 };
 
