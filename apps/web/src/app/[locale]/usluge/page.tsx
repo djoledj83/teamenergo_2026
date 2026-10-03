@@ -5,9 +5,10 @@ import { hasLocale } from "next-intl";
 import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import PageHero from "@/components/PageHero";
+import PageBlocks from "@/components/PageBlocks";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
-import { getServices, mediaUrl, type ServiceSummary } from "@/lib/api/public";
+import { getPage, getServices, mediaUrl, type ServiceSummary } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
 
 export function generateStaticParams() {
@@ -20,6 +21,14 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  const page = await getPage("services", locale as Locale).catch(() => null);
+  if (page?.meta) {
+    return {
+      title: page.meta.seoTitle ?? page.meta.title,
+      ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
+    };
+  }
   const t = await getTranslations({ locale, namespace: "home" });
   return { title: t("servicesEyebrow") };
 }
@@ -31,19 +40,27 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
 
   const t = await getTranslations("home");
 
-  const { items: services } = await getServices(locale as Locale).catch((error: unknown) => {
-    console.error("[usluge] could not load services from the API:", error);
-    return { items: [] as ServiceSummary[] };
-  });
+  // This page is the odd one out among the listing pages: tim, vesti,
+  // reference and galerija all read their editable page row, and this one did
+  // not — so the "Usluge" page in the admin, its title, its SEO fields and any
+  // block added to it were edited and then rendered nowhere at all.
+  const [page, { items: services }] = await Promise.all([
+    getPage("services", locale as Locale).catch(() => null),
+    getServices(locale as Locale).catch((error: unknown) => {
+      console.error("[usluge] could not load services from the API:", error);
+      return { items: [] as ServiceSummary[] };
+    }),
+  ]);
 
   return (
     <>
       <PageHero
         eyebrow={t("servicesEyebrow")}
-        title={t("servicesHeading")}
-        accent={t("servicesHeadingAccent")}
+        title={page?.meta?.title ?? t("servicesHeading")}
+        {...(page?.meta?.title ? {} : { accent: t("servicesHeadingAccent") })}
         iconName="WrenchScrewdriverIcon"
       />
+      <PageBlocks blocks={page?.blocks ?? []} />
 
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">

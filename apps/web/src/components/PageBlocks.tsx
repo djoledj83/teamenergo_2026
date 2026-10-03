@@ -36,14 +36,17 @@ function Block({ block, reverse }: { block: PageBlock; reverse: boolean }) {
 
   return (
     <section className="py-16 px-6 border-b border-ts-border last:border-b-0">
-      {/* A block with an image gets the full width and two columns. A
-          text-only block is constrained to a readable measure instead —
-          body copy running the whole width of a 1440px screen is a wall. */}
+      {/* Both shapes sit in the same 7xl column as the hero above and every
+          other section of the page. A text-only block used to narrow to 3xl
+          for readability, which is sound typography in isolation and wrong
+          here: it made an added block render at roughly half the width of
+          everything around it, reading as a layout fault rather than a
+          choice. Matching the page wins. */}
       <div
         className={
           image
             ? "max-w-7xl mx-auto grid gap-12 items-center lg:grid-cols-2"
-            : "max-w-3xl mx-auto"
+            : "max-w-7xl mx-auto"
         }>
         <div className={`space-y-5 ${image && reverse ? "lg:order-2" : ""}`}>
           {block.eyebrow && (

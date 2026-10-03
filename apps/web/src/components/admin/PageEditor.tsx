@@ -91,6 +91,31 @@ const BLOCK_INFO: Record<string, { label: string; description: string }> = {
   cta: { label: 'Poziv na akciju', description: 'Traka sa dugmetom.' },
 };
 
+/**
+ * Which pages render whatever blocks they are given, and which only read
+ * specific keys.
+ *
+ * Most pages end with <PageBlocks>, which renders every visible block in
+ * order — so a new block there appears on the site. The home page does not:
+ * it is a composed layout that looks up three keys by name and ignores
+ * everything else. Adding a block to it used to be possible, pointless and
+ * completely silent — you filled it in, saved, and nothing appeared anywhere,
+ * with nothing on screen to say why.
+ *
+ * Listing the keys here is a second place that has to agree with the page
+ * components, which is the same coupling BLOCK_INFO already has. The
+ * alternative — the API telling the admin what each page renders — means the
+ * server knowing about the front end, which is worse.
+ */
+const FIXED_BLOCK_PAGES: Record<string, { keys: string[]; note: string }> = {
+  home: {
+    keys: ['hero', 'video', 'contact'],
+    note:
+      'Početna strana je složen raspored: koristi tačno blokove „hero“, „video“ i ' +
+      '„contact“, a ostale ne prikazuje. Zato se ovde ne mogu dodavati novi blokovi.',
+  },
+};
+
 function readTranslations(rows: Translation[], fields: FieldConfig[]) {
   const values: Record<string, Record<string, FieldValue>> = {};
   for (const locale of ADMIN_LOCALES) {
@@ -124,6 +149,7 @@ export default function PageEditor({ page }: { page: PageData }) {
 
   const heading =
     (page.translations.find((t) => t.locale === DEFAULT_LOCALE)?.title as string) ?? page.key;
+  const fixed = FIXED_BLOCK_PAGES[page.key];
 
   return (
     <div className="space-y-6">
@@ -165,6 +191,12 @@ export default function PageEditor({ page }: { page: PageData }) {
         onSaved={() => router.refresh()}
       />
 
+      {fixed && (
+        <p className="admin-card p-5 text-sm text-ts-muted leading-relaxed border-l-2 border-ts-blue">
+          {fixed.note}
+        </p>
+      )}
+
       {page.blocks.length === 0 ? (
         <p className="admin-card p-6 text-sm text-ts-muted">
           Ova stranica još nema blokova teksta. Dodajte prvi ispod.
@@ -174,6 +206,7 @@ export default function PageEditor({ page }: { page: PageData }) {
           <Section
             key={block.id}
             title={BLOCK_INFO[block.blockKey]?.label ?? block.blockKey}
+            unused={fixed ? !fixed.keys.includes(block.blockKey) : false}
             description={BLOCK_INFO[block.blockKey]?.description ?? `Blok: ${block.blockKey}`}
             fields={BLOCK_FIELDS}
             initial={readTranslations(block.translations, BLOCK_FIELDS)}
@@ -190,7 +223,9 @@ export default function PageEditor({ page }: { page: PageData }) {
         ))
       )}
 
-      <AddBlock pageKey={page.key} existingKeys={page.blocks.map((b) => b.blockKey)} />
+      {!fixed && (
+        <AddBlock pageKey={page.key} existingKeys={page.blocks.map((b) => b.blockKey)} />
+      )}
     </div>
   );
 }
@@ -198,6 +233,7 @@ export default function PageEditor({ page }: { page: PageData }) {
 function Section({
   title,
   description,
+  unused = false,
   fields,
   initial,
   locale,
@@ -210,6 +246,8 @@ function Section({
 }: {
   title: string;
   description: string;
+  /** The page does not read this block's key, so it renders nowhere. */
+  unused?: boolean;
   fields: FieldConfig[];
   initial: Record<string, Record<string, FieldValue>>;
   locale: Locale;
@@ -273,8 +311,21 @@ function Section({
     <form onSubmit={submit} className="admin-card p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-semibold text-ts-fg">{title}</h2>
+          <h2 className="font-semibold text-ts-fg">
+            {title}
+            {unused && (
+              <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wider text-[#ef6b6b] border border-[#ef6b6b]/40 rounded-full px-2 py-0.5">
+                Ne prikazuje se
+              </span>
+            )}
+          </h2>
           <p className="text-xs text-ts-muted mt-0.5">{description}</p>
+          {unused && (
+            <p className="text-xs text-[#ef6b6b] mt-1.5 leading-relaxed">
+              Ova stranica ne čita blok sa ovim ključem, pa se njegov sadržaj nigde ne
+              prikazuje. Možete ga obrisati.
+            </p>
+          )}
         </div>
         {hasBlockExtras && (
           <label className="flex items-center gap-2 text-sm text-ts-muted cursor-pointer flex-shrink-0">

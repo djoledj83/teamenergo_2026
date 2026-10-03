@@ -234,6 +234,10 @@ async function seedPages() {
   console.info(`  pages: ${await prisma.page.count()}`);
 }
 
+// No 'intro' block for the home page. The home page is a composed layout
+// that reads 'hero', 'video' and 'contact' by name and renders nothing else,
+// so seeding an intro there created content that was editable, saveable and
+// invisible. Pages ending in <PageBlocks> take any key; this one does not.
 const PAGE_BLOCKS = [
   {
     id: 'blk_home_hero',
@@ -397,34 +401,6 @@ const PAGE_BLOCKS = [
         'handover of the facility.</p>',
       ctaLabel: 'Explore services',
       ctaHref: '/services',
-    },
-  },
-  {
-    id: 'blk_home_intro',
-    pageKey: 'home',
-    blockKey: 'intro',
-    sortOrder: 1,
-    sr: {
-      eyebrow: 'Šta nas izdvaja',
-      heading: 'Struka, standardi i provera kvaliteta',
-      subheading: null,
-      body:
-        'Da bi se naš život i navike savremenog čoveka nesmetano odvijale, kako bi privreda i ' +
-        'ritam rada određene zemlje bio u korak sa svetom, neophodno je poštovati najviše ' +
-        'kriterijume struke, stalno uvoditi nove standarde, inovacije i proveru kvaliteta.',
-      ctaLabel: null,
-      ctaHref: null,
-    },
-    en: {
-      eyebrow: 'What sets us apart',
-      heading: 'Expertise, standards and quality control',
-      subheading: null,
-      body:
-        'For everyday life and the rhythm of a country’s economy to keep pace with the world, ' +
-        'the highest professional criteria must be met, with new standards, innovation and ' +
-        'quality control introduced continuously.',
-      ctaLabel: null,
-      ctaHref: null,
     },
   },
   {
