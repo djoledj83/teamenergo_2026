@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getPost, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import RichText from "@/components/RichText";
 
 /**
  * No generateStaticParams — deliberately.
@@ -118,10 +119,7 @@ export default async function PostPage({
       {post.body && (
         <section className="px-6 pb-20">
           <div className="max-w-3xl mx-auto">
-            {/* Sanitised by the API on write. */}
-            <div
-              className="prose prose-invert prose-headings:font-display prose-a:text-ts-red max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.body }} />
+            <RichText html={post.body} />
           </div>
         </section>
       )}

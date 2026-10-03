@@ -43,6 +43,7 @@ export interface MediaRef {
   path: string;
   width: number | null;
   height: number | null;
+  sizeBytes: number;
   alt: string | null;
   caption: string | null;
 }
@@ -55,10 +56,25 @@ export interface NavEntry {
   children: Array<{ id: string; href: string; label: string }>;
 }
 
+/**
+ * A footer certification or download.
+ *
+ * At least one of `logo` and `file` is always set — the API drops rows with
+ * neither, because a row with no badge and no download has nothing to render.
+ */
+export interface SiteDocumentEntry {
+  id: string;
+  label: string;
+  description: string | null;
+  logo: MediaRef | null;
+  file: MediaRef | null;
+}
+
 export interface Bootstrap {
   locales: Array<{ code: string; name: string; isDefault: boolean }>;
   nav: NavEntry[];
   settings: Record<string, unknown>;
+  documents: SiteDocumentEntry[];
 }
 
 export interface PageBlock {
@@ -71,6 +87,8 @@ export interface PageBlock {
   ctaLabel: string | null;
   ctaHref: string | null;
   image: MediaRef | null;
+  /** YouTube or Vimeo link, played in a modal. Host-checked by the API. */
+  videoUrl: string | null;
 }
 
 export interface PageContent {
@@ -197,7 +215,13 @@ export interface Paginated<T> {
 
 export interface Homepage {
   page: PageContent | null;
+  /** Already limited by the API; `servicesTotal` says how many exist. */
   services: ServiceSummary[];
+  servicesTotal: number;
+  /** Every published service, names only — for the enquiry form's dropdown. */
+  serviceOptions: Array<{ id: string; title: string }>;
+  posts: PostSummary[];
+  postsTotal: number;
   stats: StatEntry[];
   projects: ProjectSummary[];
   testimonials: TestimonialEntry[];
@@ -290,4 +314,18 @@ export const getStats = (locale: Locale) =>
 /** Builds a public URL for a stored media file. */
 export function mediaUrl(media: Pick<MediaRef, 'path'> | null | undefined): string | null {
   return media ? `/uploads/${media.path}` : null;
+}
+
+/**
+ * A URL that saves the file rather than opening it, under a readable name.
+ *
+ * Stored filenames are generated, so without the query string a saved
+ * certificate lands on the visitor's disk as `a7f3c91e.pdf`.
+ */
+export function downloadUrl(
+  media: Pick<MediaRef, 'path'> | null | undefined,
+  name: string,
+): string | null {
+  const url = mediaUrl(media);
+  return url ? `${url}?download=${encodeURIComponent(name)}` : null;
 }

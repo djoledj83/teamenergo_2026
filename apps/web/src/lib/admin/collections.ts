@@ -23,6 +23,8 @@ export type FieldType =
   | 'boolean'
   | 'select'
   | 'image'
+  /** PDF or Word document, picked from the same library. */
+  | 'document'
   | 'date'
   | 'url'
   | 'email';
@@ -260,6 +262,41 @@ export const ADMIN_COLLECTIONS: AdminCollection[] = [
       { name: 'email', label: 'Email', type: 'email' },
       { name: 'phone', label: 'Telefon', type: 'text' },
       { name: 'linkedinUrl', label: 'LinkedIn', type: 'url' },
+    ],
+  },
+  {
+    key: 'site-documents',
+    label: 'Dokumenti i sertifikati',
+    labelSingular: 'Dokument',
+    icon: 'DocumentCheckIcon',
+    group: 'site',
+    columns: [
+      { key: 'logo', label: '', type: 'image' },
+      { key: 'label', label: 'Naziv', translated: true },
+      { key: 'isPublished', label: 'Status', type: 'boolean' },
+    ],
+    fields: [
+      { name: 'label', label: 'Naziv', type: 'text', translatable: true, required: true },
+      {
+        name: 'description',
+        label: 'Opis',
+        type: 'textarea',
+        translatable: true,
+        span: 2,
+        help: 'Prikazuje se kao opis pri prelasku mišem. Nije obavezno.',
+      },
+      {
+        name: 'logoId',
+        label: 'Logo (npr. ISO oznaka)',
+        type: 'image',
+        help: 'Prikazuje se u podnožju. Ako je dodat i fajl, klik na logo ga preuzima.',
+      },
+      {
+        name: 'fileId',
+        label: 'Fajl za preuzimanje',
+        type: 'document',
+        help: 'PDF ili Word dokument. Bez loga se prikazuje kao dugme za preuzimanje.',
+      },
     ],
   },
   {

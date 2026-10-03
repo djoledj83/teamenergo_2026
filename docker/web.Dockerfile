@@ -12,6 +12,17 @@ RUN npm ci
 FROM node:22-alpine AS build
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# NEXT_PUBLIC_* is inlined into the client bundle at BUILD time, so it has to
+# arrive here as a build arg. Setting it only in docker-compose's
+# `environment:` puts it in the running container, where the browser bundle
+# has already been written and will never read it — the same shape of mistake
+# as the uploads rewrite that baked in localhost:4000.
+#
+# Empty is fine and means the feature is simply off: no key, no map.
+ARG NEXT_PUBLIC_GOOGLE_MAPS_KEY=""
+ENV NEXT_PUBLIC_GOOGLE_MAPS_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_KEY
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build --workspace=@teamenergo/shared \

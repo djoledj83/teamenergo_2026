@@ -266,6 +266,28 @@ const PAGE_BLOCKS = [
     },
   },
   {
+    id: 'blk_home_video',
+    pageKey: 'home',
+    blockKey: 'video',
+    sortOrder: 1,
+    sr: {
+      eyebrow: null,
+      heading: 'Pogledajte kako radimo',
+      subheading: null,
+      body: null,
+      ctaLabel: 'Pogledajte naš video',
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: null,
+      heading: 'See how we work',
+      subheading: null,
+      body: null,
+      ctaLabel: 'Watch our company video',
+      ctaHref: null,
+    },
+  },
+  {
     id: 'blk_home_contact',
     pageKey: 'home',
     blockKey: 'contact',

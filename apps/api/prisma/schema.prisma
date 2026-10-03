@@ -172,6 +172,8 @@ model Media {
   clientLogos        Client[]         @relation("ClientLogo")
   pageBlockImages    PageBlock[]      @relation("PageBlockImage")
   ogImages           PageTranslation[] @relation("PageOgImage")
+  documentLogos      SiteDocument[]    @relation("SiteDocumentLogo")
+  documentFiles      SiteDocument[]    @relation("SiteDocumentFile")
 
   @@index([folder])
   @@index([createdAt])
@@ -661,6 +663,10 @@ model PageBlock {
   pageKey   String
   blockKey  String
   imageId   String?
+  /// A video to play in a modal: a YouTube or Vimeo watch URL.
+  /// Not translated — one company video serves both languages, and a block
+  /// that needed a per-language film would be a second block, not a column.
+  videoUrl  String?
   sortOrder Int      @default(0)
   isVisible Boolean  @default(true)
   updatedAt DateTime @updatedAt
@@ -729,6 +735,47 @@ model NavItemTranslation {
 // ═════════════════════════════════════════════════════════════════════════
 // Contact form submissions
 // ═════════════════════════════════════════════════════════════════════════
+
+/// A certification, policy or brochure shown in the footer.
+///
+/// One model rather than two, because an ISO logo and the certificate behind
+/// it are one thing to the visitor: the logo IS the download. A row with only
+/// a logo is a badge, a row with only a file is a download link, and a row
+/// with both is a badge you can click. Two models would have forced that
+/// relationship to be modelled as a join, for a list that is six rows long.
+model SiteDocument {
+  id          String   @id @default(cuid())
+  /// Shown in the footer strip. Optional: a plain PDF has no badge.
+  logoId      String?
+  /// The downloadable file. Optional: a logo may be decorative.
+  fileId      String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logo Media? @relation("SiteDocumentLogo", fields: [logoId], references: [id], onDelete: SetNull)
+  file Media? @relation("SiteDocumentFile", fields: [fileId], references: [id], onDelete: SetNull)
+
+  translations SiteDocumentTranslation[]
+
+  @@index([isPublished, sortOrder])
+  @@map("site_document")
+}
+
+model SiteDocumentTranslation {
+  id          String  @id @default(cuid())
+  documentId  String
+  locale      String  @db.VarChar(5)
+  label       String
+  description String?
+
+  document SiteDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, locale])
+  @@index([locale])
+  @@map("site_document_translation")
+}
 
 model Inquiry {
   id        String        @id @default(cuid())

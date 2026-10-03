@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getProject, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import RichText from "@/components/RichText";
 
 /** Slugs are per-language; see the note in usluge/[slug]/page.tsx. */
 
@@ -135,10 +136,7 @@ export default async function ProjectDetailPage({
       {project.body && (
         <section className="px-6 py-16">
           <div className="max-w-3xl mx-auto">
-            {/* Sanitised by the API on write. */}
-            <div
-              className="prose prose-invert prose-headings:font-display prose-a:text-ts-red max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.body }} />
+            <RichText html={project.body} />
           </div>
         </section>
       )}

@@ -31,6 +31,7 @@ interface Block {
   id: string;
   blockKey: string;
   imageId: string | null;
+  videoUrl: string | null;
   isVisible: boolean;
   translations: Translation[];
 }
@@ -79,6 +80,13 @@ const BLOCK_INFO: Record<string, { label: string; description: string }> = {
       'u meniju Statistika; prikazuju se samo one koje su objavljene.',
   },
   intro: { label: 'Uvod', description: 'Uvodni tekst ispod glavnog bloka.' },
+  video: {
+    label: 'Video kompanije',
+    description:
+      'Dugme ispod sekcije „U brojkama“ koje otvara snimak u prozoru. Naslov je tekst '
+      + 'iznad dugmeta, „Tekst dugmeta“ je natpis na njemu, a snimak se dodaje u polje '
+      + 'Video. Prazno polje Video znači da se dugme ne prikazuje.',
+  },
   cta: { label: 'Poziv na akciju', description: 'Traka sa dugmetom.' },
 };
 
@@ -170,6 +178,7 @@ export default function PageEditor({ page }: { page: PageData }) {
             initial={readTranslations(block.translations, BLOCK_FIELDS)}
             locale={locale}
             imageId={block.imageId}
+            videoUrl={block.videoUrl}
             isVisible={block.isVisible}
             save={(translations, extra) =>
               adminApi.patch(`site/blocks/${block.id}`, { ...extra, translations })
@@ -192,6 +201,7 @@ function Section({
   initial,
   locale,
   imageId: initialImageId,
+  videoUrl: initialVideoUrl,
   isVisible: initialIsVisible,
   save,
   onSaved,
@@ -203,6 +213,7 @@ function Section({
   initial: Record<string, Record<string, FieldValue>>;
   locale: Locale;
   imageId?: string | null;
+  videoUrl?: string | null;
   isVisible?: boolean;
   save: (
     translations: Record<string, Record<string, unknown>>,
@@ -213,6 +224,7 @@ function Section({
 }) {
   const [values, setValues] = useState(initial);
   const [imageId, setImageId] = useState<FieldValue>(initialImageId ?? null);
+  const [videoUrl, setVideoUrl] = useState<FieldValue>(initialVideoUrl ?? null);
   const [isVisible, setIsVisible] = useState(initialIsVisible ?? true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -238,7 +250,9 @@ function Section({
     try {
       await save(
         toPayload(values),
-        hasBlockExtras ? { imageId: imageId ?? null, isVisible } : undefined,
+        hasBlockExtras
+          ? { imageId: imageId ?? null, videoUrl: videoUrl ?? null, isVisible }
+          : undefined,
       );
       setSaved(true);
       onSaved();
@@ -301,6 +315,28 @@ function Section({
               value={imageId}
               onChange={(value) => {
                 setImageId(value);
+                setSaved(false);
+              }}
+              disabled={saving}
+            />
+          </div>
+        )}
+
+        {hasBlockExtras && (
+          <div className="md:col-span-2">
+            <FormField
+              field={{
+                name: 'videoUrl',
+                label: 'Video (YouTube ili Vimeo)',
+                type: 'url',
+                help:
+                  'Nalepite link ka snimku, npr. https://www.youtube.com/watch?v=… — ' +
+                  'dugme za reprodukciju se pojavljuje samo ako je polje popunjeno. ' +
+                  'Video se učitava tek kada posetilac klikne.',
+              }}
+              value={videoUrl}
+              onChange={(value) => {
+                setVideoUrl(value);
                 setSaved(false);
               }}
               disabled={saving}

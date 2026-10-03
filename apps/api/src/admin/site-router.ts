@@ -44,8 +44,48 @@ const updatePageSchema = z.object({
   translations: translationsRecord(pageCopySchema).optional(),
 });
 
+/**
+ * A YouTube or Vimeo address, and nothing else.
+ *
+ * The value ends up inside an iframe src. Accepting any URL would let an
+ * editor — or anyone with a stolen editor session — embed an arbitrary origin
+ * in a page of the public site, which is a framed-content hole of exactly the
+ * kind the rich-text sanitiser exists to close. An allowlist of hosts is the
+ * check; the player itself parses the id out of whatever shape of link this
+ * is and builds its own embed URL, so nothing pasted here is ever used
+ * verbatim as a src.
+ */
+const VIDEO_HOSTS = new Set([
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'youtu.be',
+  'youtube-nocookie.com',
+  'www.youtube-nocookie.com',
+  'vimeo.com',
+  'www.vimeo.com',
+  'player.vimeo.com',
+]);
+
+const videoUrl = z
+  .string()
+  .max(400)
+  .refine((value) => {
+    if (value.trim() === '') return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && VIDEO_HOSTS.has(url.hostname);
+    } catch {
+      return false;
+    }
+  }, 'Podržani su samo YouTube i Vimeo linkovi (https)')
+  .transform((value) => (value.trim() === '' ? null : value.trim()))
+  .nullable()
+  .optional();
+
 const updateBlockSchema = z.object({
   imageId: z.string().nullable().optional(),
+  videoUrl,
   isVisible: z.boolean().optional(),
   translations: translationsRecord(blockCopySchema).optional(),
 });
@@ -138,6 +178,7 @@ const createBlockSchema = z.object({
     .max(60)
     .regex(/^[a-z0-9-]+$/, 'Ključ može sadržati samo mala slova, brojeve i crtice'),
   imageId: z.string().nullable().optional(),
+  videoUrl,
   isVisible: z.boolean().optional(),
   translations: translationsRecord(blockCopySchema).optional(),
 });
@@ -178,6 +219,7 @@ siteRouter.post(
             pageKey: key,
             blockKey: input.blockKey,
             imageId: input.imageId ?? null,
+            videoUrl: input.videoUrl ?? null,
             isVisible: input.isVisible ?? true,
             sortOrder: (last?.sortOrder ?? -1) + 1,
           },
@@ -257,6 +299,7 @@ siteRouter.patch(
           where: { id },
           data: {
             ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
+            ...(input.videoUrl !== undefined ? { videoUrl: input.videoUrl } : {}),
             ...(input.isVisible !== undefined ? { isVisible: input.isVisible } : {}),
           },
         });

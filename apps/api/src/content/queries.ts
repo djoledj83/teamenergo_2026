@@ -19,6 +19,9 @@ const mediaSelect = {
   path: true,
   width: true,
   height: true,
+  // Shown next to a download link, so a visitor knows what they are about to
+  // fetch before tapping it on a phone.
+  sizeBytes: true,
   variants: true,
   translations: { select: { locale: true, alt: true, caption: true } },
 } as const;
@@ -26,7 +29,7 @@ const mediaSelect = {
 // ── Layout ──────────────────────────────────────────────────────────────
 
 export async function getBootstrap(locale: Locale) {
-  const [locales, navItems, settings] = await Promise.all([
+  const [locales, navItems, settings, documents] = await Promise.all([
     prisma.locale.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
@@ -44,6 +47,18 @@ export async function getBootstrap(locale: Locale) {
       },
     }),
     prisma.setting.findMany(),
+    // Certifications and downloads for the footer. Part of bootstrap because
+    // the footer is on every page and this is the call every page already
+    // makes for it — a second round trip for six rows would be waste.
+    prisma.siteDocument.findMany({
+      where: publishedOnly,
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        translations: true,
+        logo: { select: mediaSelect },
+        file: { select: mediaSelect },
+      },
+    }),
   ]);
 
   const nav = navItems
@@ -58,6 +73,20 @@ export async function getBootstrap(locale: Locale) {
     locales,
     nav,
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
+    documents: documents
+      .map((document) => {
+        const flat = flattenEntity(document, locale);
+        if (!flat) return null;
+        return {
+          id: flat.id,
+          label: flat.label,
+          description: flat.description,
+          logo: flattenMedia(document.logo, locale),
+          file: flattenMedia(document.file, locale),
+        };
+      })
+      // A row with neither a badge nor a download has nothing to show.
+      .filter((document) => document !== null && (document.logo || document.file)),
   };
 }
 
@@ -90,10 +119,24 @@ export async function getPage(key: string, locale: Locale) {
 
 // ── Services ────────────────────────────────────────────────────────────
 
-export async function listServices(locale: Locale) {
+/**
+ * Orders featured services first, then the rest by their own sort order.
+ *
+ * Two keys rather than one filter: `isFeatured` picks what the homepage leads
+ * with, and `sortOrder` fills the remaining places. A homepage that showed
+ * only flagged services would be empty until somebody remembered to tick a
+ * box, which is a worse default than showing the first few.
+ */
+const featuredFirst = [
+  { isFeatured: 'desc' },
+  { sortOrder: 'asc' },
+] satisfies Array<Record<string, 'asc' | 'desc'>>;
+
+export async function listServices(locale: Locale, limit?: number) {
   const services = await prisma.service.findMany({
     where: publishedOnly,
-    orderBy: { sortOrder: 'asc' },
+    orderBy: limit === undefined ? { sortOrder: 'asc' } : featuredFirst,
+    ...(limit === undefined ? {} : { take: limit }),
     include: {
       translations: true,
       image: { select: mediaSelect },
@@ -115,6 +158,27 @@ export async function listServices(locale: Locale) {
       };
     })
     .filter((service): service is NonNullable<typeof service> => service !== null);
+}
+
+/**
+ * Every published service, as id and name only.
+ *
+ * For the enquiry form's dropdown, which needs the complete list but none of
+ * the images, stats or body copy that `listServices` carries.
+ */
+export async function listServiceOptions(locale: Locale) {
+  const services = await prisma.service.findMany({
+    where: publishedOnly,
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true, translations: true },
+  });
+
+  return services
+    .map((service) => {
+      const flat = flattenEntity(service, locale);
+      return flat ? { id: flat.id, title: flat.title } : null;
+    })
+    .filter((option): option is { id: string; title: string } => option !== null);
 }
 
 export async function getServiceBySlug(slug: string, locale: Locale) {
@@ -443,25 +507,47 @@ export async function listStats(locale: Locale) {
 
 // ── Homepage composite ──────────────────────────────────────────────────
 
+/** How many services and news items the homepage leads with. */
+export const HOME_SERVICES = 5;
+export const HOME_POSTS = 8;
+
 /**
  * One call for the whole homepage.
  *
- * Server-rendering the page with six separate round trips would be wasteful,
- * and the queries are independent, so they run in parallel.
+ * Server-rendering the page with separate round trips would be wasteful, and
+ * the queries are independent, so they run in parallel.
+ *
+ * The section limits are applied here rather than in the components: sending
+ * every service and every article to the browser so React can drop most of
+ * them is waste on a page that is already the heaviest on the site. The
+ * totals come back alongside so a section knows whether to offer "see all"
+ * without having to fetch the rest to find out.
  */
 export async function getHomepage(locale: Locale) {
-  const [page, services, stats, projects, testimonials, clients] = await Promise.all([
-    getPage('home', locale),
-    listServices(locale),
-    listStats(locale),
-    listProjects({ locale, page: 1, pageSize: 3, featuredOnly: true }),
-    listTestimonials(locale),
-    listClients(locale),
-  ]);
+  const [page, services, allServices, posts, stats, projects, testimonials, clients] =
+    await Promise.all([
+      getPage('home', locale),
+      listServices(locale, HOME_SERVICES),
+      // The enquiry form's "Odaberite uslugu" dropdown needs every service,
+      // not the five the section shows, or a visitor cannot ask about the
+      // sixth one. Names and ids only — the form needs nothing else, and the
+      // full records are already in `services` for the part of the page that
+      // displays them.
+      listServiceOptions(locale),
+      listPosts({ locale, page: 1, pageSize: HOME_POSTS }),
+      listStats(locale),
+      listProjects({ locale, page: 1, pageSize: 3, featuredOnly: true }),
+      listTestimonials(locale),
+      listClients(locale),
+    ]);
 
   return {
     page,
     services,
+    servicesTotal: allServices.length,
+    serviceOptions: allServices,
+    posts: posts.items,
+    postsTotal: posts.total,
     stats,
     projects: projects.items,
     testimonials,

@@ -1,0 +1,13 @@
+-- A page block can carry a video to play in a modal, alongside the image it
+-- can already carry. Used by the "video" block on the homepage, under the
+-- statistics, for the company film.
+--
+-- A URL rather than a media reference: the file is hosted by YouTube. Serving
+-- video off this box would need ffmpeg for a poster frame, upload limits
+-- raised in three places, and HTTP range requests in the uploads route —
+-- without the last of those the scrubber does nothing — for worse playback
+-- than an embed gives for free.
+--
+-- Nullable, so the column lands on a database that already has rows, and so a
+-- block with no video simply renders no button.
+ALTER TABLE "page_block" ADD COLUMN "videoUrl" TEXT;

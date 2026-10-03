@@ -432,3 +432,114 @@ export const statsRouter: Router = createCollectionRouter<CreateStat, UpdateStat
     );
   },
 });
+
+// ── Site documents (footer certifications and downloads) ────────────────
+// One collection covers ISO badges, the certificate PDFs behind them, and
+// standalone documents: a row carries an optional logo and an optional file,
+// and the footer decides what to render from which of the two is present.
+
+const siteDocumentCopySchema = z.object({
+  label: z.string().min(1).max(160),
+  description: z.string().max(400).nullable().optional(),
+});
+
+const createSiteDocumentSchema = publishableSchema.extend({
+  logoId: z.string().nullable().optional(),
+  fileId: z.string().nullable().optional(),
+  translations: translationsRecord(siteDocumentCopySchema),
+});
+const updateSiteDocumentSchema = createSiteDocumentSchema.partial();
+
+type CreateSiteDocument = z.infer<typeof createSiteDocumentSchema>;
+type UpdateSiteDocument = z.infer<typeof updateSiteDocumentSchema>;
+
+const siteDocumentInclude = {
+  translations: true,
+  logo: { include: { translations: true } },
+  file: { include: { translations: true } },
+} as const;
+
+export const siteDocumentsRouter: Router = createCollectionRouter<
+  CreateSiteDocument,
+  UpdateSiteDocument
+>({
+  entity: 'SiteDocument',
+  action: 'site-document',
+  label: 'Dokument',
+  createSchema: createSiteDocumentSchema,
+  updateSchema: updateSiteDocumentSchema,
+
+  list: async () =>
+    withMissing(
+      await prisma.siteDocument.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: siteDocumentInclude,
+      }),
+    ),
+
+  find: (id) => prisma.siteDocument.findUnique({ where: { id }, include: siteDocumentInclude }),
+
+  create: (input) =>
+    prisma.$transaction(async (tx) => {
+      const created = await tx.siteDocument.create({
+        data: {
+          logoId: input.logoId ?? null,
+          fileId: input.fileId ?? null,
+          isPublished: input.isPublished ?? false,
+          sortOrder: input.sortOrder ?? 0,
+        },
+      });
+      await writeTranslations(input.translations, (locale, copy) =>
+        tx.siteDocumentTranslation.create({
+          data: {
+            documentId: created.id,
+            locale,
+            label: copy.label,
+            description: copy.description ?? null,
+          },
+        }),
+      );
+      return tx.siteDocument.findUniqueOrThrow({
+        where: { id: created.id },
+        include: siteDocumentInclude,
+      });
+    }),
+
+  update: (id, input) =>
+    prisma.$transaction(async (tx) => {
+      await tx.siteDocument.update({
+        where: { id },
+        data: {
+          ...(input.logoId !== undefined ? { logoId: input.logoId } : {}),
+          ...(input.fileId !== undefined ? { fileId: input.fileId } : {}),
+          ...(input.isPublished !== undefined ? { isPublished: input.isPublished } : {}),
+          ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
+        },
+      });
+      await writeTranslations(input.translations, (locale, copy) =>
+        tx.siteDocumentTranslation.upsert({
+          where: { documentId_locale: { documentId: id, locale } },
+          update: { label: copy.label, description: copy.description ?? null },
+          create: {
+            documentId: id,
+            locale,
+            label: copy.label,
+            description: copy.description ?? null,
+          },
+        }),
+      );
+      return tx.siteDocument.findUniqueOrThrow({ where: { id }, include: siteDocumentInclude });
+    }),
+
+  remove: async (id) => {
+    await prisma.siteDocument.delete({ where: { id } });
+  },
+
+  reorder: async (updates) => {
+    await prisma.$transaction(
+      updates.map((u) =>
+        prisma.siteDocument.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } }),
+      ),
+    );
+  },
+});

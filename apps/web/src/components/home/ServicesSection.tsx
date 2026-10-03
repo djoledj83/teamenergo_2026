@@ -25,8 +25,16 @@ const SPANS = [
 const spanFor = (index: number) => SPANS[index % SPANS.length] ?? "";
 const isWide = (index: number) => index % SPANS.length === 4;
 
-export default function ServicesSection({ services }: { services: ServiceSummary[] }) {
+export default function ServicesSection({
+  services,
+  total,
+}: {
+  services: ServiceSummary[];
+  /** How many are published in all; the API sends only the first few. */
+  total?: number;
+}) {
   const sectionRef = useRef<HTMLElement>(null);
+  const hasMore = (total ?? services.length) > services.length;
 
   useEffect(() => {
     const els = sectionRef.current?.querySelectorAll(".reveal-hidden");
@@ -66,6 +74,19 @@ export default function ServicesSection({ services }: { services: ServiceSummary
               <span className="text-gradient-red italic">napajamo.</span>
             </h2>
           </div>
+
+          {/* Only when there is in fact more to see — a "view all" that leads
+              to the same five services is a dead end dressed as a promise. */}
+          {hasMore && (
+            <Link
+              href="/usluge"
+              className="group inline-flex items-center gap-2 text-sm font-bold text-ts-fg hover:text-ts-red transition-colors flex-shrink-0">
+              Prikaži sve usluge
+              <span className="w-9 h-9 rounded-full border border-ts-border flex items-center justify-center group-hover:bg-ts-red group-hover:border-ts-red group-hover:text-black transition-all">
+                <Icon name="ArrowRightIcon" size={14} />
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Bento Grid */}

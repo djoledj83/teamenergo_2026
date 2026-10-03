@@ -1,7 +1,46 @@
+import Image from "next/image";
 import AppLogo from "@/components/ui/AppLogo";
 import Icon from "@/components/ui/AppIcon";
 import { Link } from "@/i18n/navigation";
-import type { NavEntry } from "@/lib/api/public";
+import {
+  downloadUrl,
+  mediaUrl,
+  type NavEntry,
+  type SiteDocumentEntry,
+} from "@/lib/api/public";
+
+/** "1,4 MB" — a reader deciding whether to tap a link wants the size. */
+function fileSize(bytes: number | null | undefined): string | null {
+  if (!bytes || bytes <= 0) return null;
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(1).replace(".", ",")} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+const extensionOf = (path: string): string => {
+  const ext = path.split(".").pop();
+  return ext && ext.length <= 4 ? ext.toUpperCase() : "FAJL";
+};
+
+/**
+ * Everything the footer needs about a row's download, or null when it has
+ * none.
+ *
+ * One place that answers "is there a file, and what do I call it", because
+ * both the badge strip and the download list need the same three facts and
+ * the alternative is a non-null assertion at each use — which is exactly how
+ * a certification with a logo but no certificate took the whole page down
+ * with "Cannot read properties of null".
+ */
+function download(doc: SiteDocumentEntry) {
+  if (!doc.file) return null;
+  const extension = extensionOf(doc.file.path);
+  return {
+    href: downloadUrl(doc.file, `${doc.label}.${extension.toLowerCase()}`)!,
+    extension,
+    size: fileSize(doc.file.sizeBytes),
+  };
+}
 
 /**
  * Site footer.
@@ -15,9 +54,11 @@ import type { NavEntry } from "@/lib/api/public";
 export default function Footer({
   nav = [],
   settings = {},
+  documents = [],
 }: {
   nav?: NavEntry[];
   settings?: Record<string, unknown>;
+  documents?: SiteDocumentEntry[];
 }) {
   const text = (key: string): string | null => {
     const value = settings[key];
@@ -38,6 +79,22 @@ export default function Footer({
   ]
     .map((entry) => ({ ...entry, url: text(entry.key) }))
     .filter((entry): entry is typeof entry & { url: string } => entry.url !== null);
+
+  // A row with a logo is a badge, whether or not it also has a file behind
+  // it; a row with only a file is a download link.
+  // Built with flatMap rather than filter-then-assert: a filter narrows
+  // nothing for the compiler, so the `!` that follows one is a claim nobody
+  // checks — and the first row with a logo and no certificate proved it by
+  // throwing on `doc.file!.path`.
+  const badges = documents.flatMap((doc) => {
+    const logo = mediaUrl(doc.logo);
+    return logo ? [{ doc, logo, file: download(doc) }] : [];
+  });
+  const downloads = documents.flatMap((doc) => {
+    if (doc.logo) return [];
+    const file = download(doc);
+    return file ? [{ doc, file }] : [];
+  });
 
   return (
     <footer className="border-t border-ts-border py-16 px-6">
@@ -116,6 +173,67 @@ export default function Footer({
             </div>
           )}
         </div>
+
+        {documents.length > 0 && (
+          <div className="border-t border-ts-border pt-10 pb-10 space-y-6">
+            {/* Badges first — a certification logo is read at a glance, and
+                the ones that have a certificate behind them link to it. */}
+            {badges.length > 0 && (
+              <ul className="flex flex-wrap items-center gap-6">
+                {badges.map(({ doc, logo, file }) => {
+                  const badge = (
+                    <span className="relative block w-20 h-20">
+                      <Image
+                        src={logo}
+                        alt={doc.logo?.alt ?? doc.label}
+                        fill
+                        sizes="80px"
+                        className="object-contain" />
+                    </span>
+                  );
+                  return (
+                    <li key={doc.id} title={doc.description ?? doc.label}>
+                      {file ? (
+                        <a
+                          href={file.href}
+                          className="block opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red rounded"
+                          aria-label={`${doc.label} — preuzmite dokument`}>
+                          {badge}
+                        </a>
+                      ) : (
+                        badge
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {downloads.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-ts-fg uppercase tracking-widest">
+                  Dokumenti
+                </p>
+                <ul className="flex flex-wrap gap-3">
+                  {downloads.map(({ doc, file }) => (
+                    <li key={doc.id}>
+                      <a
+                        href={file.href}
+                        className="inline-flex items-center gap-2.5 text-sm text-ts-muted bg-ts-surface border border-ts-border rounded-full pl-3 pr-4 py-2 hover:text-ts-fg hover:border-ts-red transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red">
+                        <Icon name="ArrowDownTrayIcon" size={14} className="text-ts-red flex-shrink-0" />
+                        <span>{doc.label}</span>
+                        <span className="text-[10px] font-bold text-ts-muted-2 uppercase tracking-wider">
+                          {file.extension}
+                          {file.size ? ` · ${file.size}` : ""}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="border-t border-ts-border pt-8">
           <span className="text-ts-muted text-sm">

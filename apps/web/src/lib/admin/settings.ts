@@ -64,14 +64,11 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: 'social.facebook', name: 'social.facebook', label: 'Facebook', type: 'text', span: 2 },
     ],
   },
-  {
-    title: 'Mapa',
-    description: 'Koordinate za mapu na stranici Kontakt.',
-    fields: [
-      { key: 'map.lat', name: 'map.lat', label: 'Geografska širina', type: 'text' },
-      { key: 'map.lng', name: 'map.lng', label: 'Geografska dužina', type: 'text' },
-    ],
-  },
+  // No map group any more. The map on the Kontakt page reads the address
+  // above, so there is one address on the site rather than an address and a
+  // pair of coordinates that drift apart the first time the office moves.
+  // map.lat and map.lng were never read by anything; if either is still in
+  // the database it appears under "Ostalo" and can be deleted there.
 ];
 
 /** Every key the groups above account for. */

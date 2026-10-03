@@ -55,7 +55,52 @@ module.exports = {
             animation: {
                 shimmer: 'shimmer 3s ease-in-out infinite',
             },
+            /**
+             * Typography, in the site's own colours.
+             *
+             * The plugin ships a light-on-white theme and a `prose-invert`
+             * variant to flip it. This site is dark only, so the defaults are
+             * redefined here once and `prose-invert` is not used — one theme
+             * instead of two, and no call site has to remember the modifier.
+             */
+            typography: ({ theme }) => ({
+                DEFAULT: {
+                    css: {
+                        '--tw-prose-body': theme('colors.ts-muted'),
+                        '--tw-prose-headings': theme('colors.ts-fg'),
+                        '--tw-prose-lead': theme('colors.ts-muted'),
+                        '--tw-prose-links': theme('colors.ts-red'),
+                        '--tw-prose-bold': theme('colors.ts-fg'),
+                        '--tw-prose-counters': theme('colors.ts-muted'),
+                        '--tw-prose-bullets': theme('colors.ts-red'),
+                        '--tw-prose-hr': theme('colors.ts-border'),
+                        '--tw-prose-quotes': theme('colors.ts-fg'),
+                        '--tw-prose-quote-borders': theme('colors.ts-red'),
+                        '--tw-prose-captions': theme('colors.ts-muted-2'),
+                        '--tw-prose-code': theme('colors.ts-fg'),
+                        '--tw-prose-pre-code': theme('colors.ts-fg'),
+                        '--tw-prose-pre-bg': theme('colors.ts-surface'),
+                        '--tw-prose-th-borders': theme('colors.ts-border'),
+                        '--tw-prose-td-borders': theme('colors.ts-border'),
+                        // Headings use the display face, as everywhere else.
+                        'h1, h2, h3, h4': {
+                            fontFamily: 'Fraunces, serif',
+                            fontWeight: '700',
+                        },
+                    },
+                },
+            }),
         },
     },
-    plugins: [],
+    /**
+     * @tailwindcss/typography was a dependency for months without being
+     * registered here, so every `prose` class emitted nothing: headings and
+     * lists written in the admin editor rendered as plain text on the public
+     * site, because preflight strips their defaults and nothing put them back.
+     *
+     * @tailwindcss/forms and tailwindcss-animate are also installed and also
+     * unregistered. They stay that way deliberately — registering `forms`
+     * restyles every input on the site, which is not a change anyone asked for.
+     */
+    plugins: [require('@tailwindcss/typography')],
 };

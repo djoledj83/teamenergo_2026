@@ -27,6 +27,14 @@ interface Props {
   multiple?: boolean;
   /** Already in the album — shown greyed out and not selectable. */
   excludeIds?: readonly string[];
+  /**
+   * What the field holds right now, in single-pick mode. Marked in the grid so
+   * reopening the picker shows which image is currently assigned instead of
+   * presenting the library as though nothing were chosen.
+   */
+  currentId?: string | null;
+  /** Which half of the library to show. Images by default. */
+  kind?: 'image' | 'document';
   title?: string;
 }
 
@@ -35,8 +43,11 @@ export default function MediaLibraryDialog({
   onPick,
   multiple = false,
   excludeIds = [],
-  title = 'Biblioteka slika',
+  currentId = null,
+  kind = 'image',
+  title,
 }: Props) {
+  const heading = title ?? (kind === 'document' ? 'Biblioteka dokumenata' : 'Biblioteka slika');
   const [items, setItems] = useState<MediaItem[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,16 +62,19 @@ export default function MediaLibraryDialog({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Images only. The library also holds PDFs and Word documents, and
-      // every field that opens this dialog expects something renderable.
-      const data = await adminApi.get<{ items: MediaItem[] }>('media?kind=image&pageSize=100');
+      // One half of the library at a time. A picker for a service photo
+      // should not offer a PDF, and a picker for a certificate should not
+      // make the editor scroll past two hundred photographs to find it.
+      const data = await adminApi.get<{ items: MediaItem[] }>(
+        `media?kind=${kind}&pageSize=100`,
+      );
       setItems(data.items);
     } catch (caught) {
       setError(caught instanceof AdminApiError ? caught.message : 'Učitavanje nije uspelo');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [kind]);
 
   useEffect(() => {
     void load();
@@ -132,16 +146,16 @@ export default function MediaLibraryDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-label={heading}
     >
       <div className="admin-card w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-ts-border">
-          <h2 className="font-display text-lg font-bold text-ts-fg">{title}</h2>
+          <h2 className="font-display text-lg font-bold text-ts-fg">{heading}</h2>
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept={kind === 'document' ? '.pdf,.docx' : 'image/*'}
               multiple
               className="hidden"
               onChange={(e) => void handleUpload(e.target.files)}
@@ -249,7 +263,9 @@ export default function MediaLibraryDialog({
               {items.map((media) => {
                 const isExcluded = excluded.has(media.id);
                 const order = selected.indexOf(media.id);
-                const isSelected = order !== -1;
+                const isMultiSelected = order !== -1;
+                const isCurrent = !multiple && media.id === currentId;
+                const isSelected = isMultiSelected || isCurrent;
 
                 return (
                   <button
@@ -258,27 +274,42 @@ export default function MediaLibraryDialog({
                     onClick={() => choose(media)}
                     disabled={isExcluded}
                     title={isExcluded ? `${media.originalName} — već u albumu` : media.originalName}
-                    aria-pressed={multiple ? isSelected : undefined}
+                    aria-pressed={multiple ? isMultiSelected : isCurrent || undefined}
                     className={`group relative aspect-square rounded-lg overflow-hidden border transition-colors ${
                       isSelected
                         ? 'border-ts-blue ring-2 ring-ts-blue'
                         : 'border-ts-border hover:border-ts-blue'
                     } ${isExcluded ? 'opacity-35 cursor-not-allowed' : ''}`}
                   >
-                    <Image
-                      src={mediaSrc(media.path)}
-                      alt={mediaAlt(media)}
-                      fill
-                      sizes="140px"
-                      className="object-cover"
-                    />
+                    {kind === 'document' ? (
+                      <span className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-2 text-center">
+                        <Icon name="DocumentIcon" size={24} className="text-ts-muted" />
+                        <span className="text-[10px] leading-tight text-ts-muted break-all line-clamp-3">
+                          {media.originalName}
+                        </span>
+                      </span>
+                    ) : (
+                      <Image
+                        src={mediaSrc(media.path)}
+                        alt={mediaAlt(media)}
+                        fill
+                        sizes="140px"
+                        className="object-cover"
+                      />
+                    )}
                     <span className="absolute inset-0 bg-ts-blue/0 group-hover:bg-ts-blue/20 transition-colors" />
 
-                    {multiple && isSelected && (
+                    {multiple && isMultiSelected && (
                       // The number, not just a tick: in an album the order is
                       // part of what is being chosen.
                       <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-ts-blue text-white text-xs font-bold flex items-center justify-center">
                         {order + 1}
+                      </span>
+                    )}
+
+                    {isCurrent && (
+                      <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-ts-blue text-white flex items-center justify-center">
+                        <Icon name="CheckIcon" size={14} />
                       </span>
                     )}
 

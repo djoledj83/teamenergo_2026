@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getService, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import RichText from "@/components/RichText";
 
 /**
  * A single service.
@@ -176,12 +177,7 @@ export default async function ServiceDetailPage({
               measure. A column that stops short of the picture it belongs to
               reads as a mistake rather than as typography. */}
           <div className="max-w-7xl mx-auto">
-            {/* Body is HTML from the admin's rich-text editor. The API
-                sanitises it on write (see apps/api/src/content/rich-text.ts),
-                so what is stored is already safe to inject here. */}
-            <div
-              className="prose prose-invert prose-headings:font-display prose-headings:font-bold prose-a:text-ts-red max-w-none"
-              dangerouslySetInnerHTML={{ __html: service.body }} />
+            <RichText html={service.body} />
           </div>
         </section>
       )}

@@ -42,7 +42,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const [page, bootstrap, services] = await Promise.all([
     getPage("contact", locale as Locale).catch(() => null),
     getBootstrap(locale as Locale).catch(
-      (): Bootstrap => ({ locales: [], nav: [], settings: {} }),
+      (): Bootstrap => ({ locales: [], nav: [], settings: {}, documents: [] }),
     ),
     getServices(locale as Locale)
       .then((data) => data.items)

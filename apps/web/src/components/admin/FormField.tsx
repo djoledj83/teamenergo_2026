@@ -103,10 +103,12 @@ export default function FormField({
         );
 
       case 'image':
+      case 'document':
         return (
           <MediaPicker
             value={(value as string) ?? null}
             onChange={(mediaId) => onChange(mediaId)}
+            kind={field.type === 'document' ? 'document' : 'image'}
             disabled={disabled}
           />
         );

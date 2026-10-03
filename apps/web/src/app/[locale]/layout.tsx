@@ -20,7 +20,7 @@ import type { Locale } from '@teamenergo/shared';
  * next-intl would have to look at the incoming request to know the language.
  */
 
-const EMPTY_BOOTSTRAP: Bootstrap = { locales: [], nav: [], settings: {} };
+const EMPTY_BOOTSTRAP: Bootstrap = { locales: [], nav: [], settings: {}, documents: [] };
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -54,7 +54,11 @@ export default async function LocaleLayout({
       <div className="bg-ts-bg text-ts-fg min-h-screen flex flex-col">
         <Header nav={bootstrap.nav} locales={bootstrap.locales} />
         <main className="flex-1">{children}</main>
-        <Footer nav={bootstrap.nav} settings={bootstrap.settings} />
+        <Footer
+          nav={bootstrap.nav}
+          settings={bootstrap.settings}
+          documents={bootstrap.documents}
+        />
       </div>
     </NextIntlClientProvider>
   );

@@ -76,6 +76,31 @@ export async function GET(
     if (value) headers.set(name, value);
   }
 
+  /**
+   * ?download=<name> saves the file instead of opening it.
+   *
+   * Two problems without it. A PDF opens in the browser's viewer, so a
+   * "download" link does not download; and files are stored under generated
+   * names, so when one is saved it lands as `a7f3c91e.pdf` rather than
+   * `ISO-9001-2015.pdf`. Content-Disposition fixes both.
+   *
+   * The name is sanitised rather than trusted: it arrives in a query string,
+   * and a quote or a newline in a header value is header injection. Anything
+   * outside a conservative set is replaced, and `filename*` carries the real
+   * UTF-8 name for browsers that read it, so Serbian characters survive.
+   */
+  const requested = new URL(request.url).searchParams.get('download');
+  if (requested !== null) {
+    const fallback =
+      requested.replace(/[^\w.\- ]+/g, '_').slice(0, 120).trim() || 'preuzimanje';
+    headers.set(
+      'Content-Disposition',
+      `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(
+        requested.slice(0, 120),
+      )}`,
+    );
+  }
+
   if (upstream.status === 304) return new NextResponse(null, { status: 304, headers });
 
   return new NextResponse(upstream.body, { status: upstream.status, headers });

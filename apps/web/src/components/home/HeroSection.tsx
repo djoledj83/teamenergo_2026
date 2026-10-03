@@ -6,6 +6,7 @@ import Icon from "@/components/ui/AppIcon";
 import { Link } from "@/i18n/navigation";
 import TickerBar from "@/components/home/TickerBar";
 import { mediaUrl, type ClientEntry, type PageBlock, type StatEntry } from "@/lib/api/public";
+import RichText from "@/components/RichText";
 
 /**
  * Homepage hero.
@@ -116,10 +117,7 @@ export default function HeroSection({
             )}
 
             {block.body && (
-              // Sanitised by the API on write; see apps/api/src/content/rich-text.ts.
-              <div
-                className="text-lg text-ts-muted leading-relaxed max-w-lg font-light [&>p]:mb-4 [&>p:last-child]:mb-0"
-                dangerouslySetInnerHTML={{ __html: block.body }} />
+              <RichText html={block.body} variant="lead" className="max-w-lg" />
             )}
 
             {block.ctaLabel && block.ctaHref && (

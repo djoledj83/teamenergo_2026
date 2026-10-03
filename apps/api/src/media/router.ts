@@ -71,6 +71,26 @@ mediaRouter.get(
   }),
 );
 
+/**
+ * One file by id.
+ *
+ * The admin's image field stores a media id and needs to resolve it back into
+ * something it can show. Without this route that lookup 404s, the picker's
+ * catch treats it as a deleted file, and a field with an image assigned renders
+ * as though it were empty — the editor cannot see which picture is chosen.
+ */
+mediaRouter.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const media = await prisma.media.findUnique({
+      where: { id: req.params.id as string },
+      include: { translations: true },
+    });
+    if (!media) throw HttpError.notFound('Fajl ne postoji');
+    res.json(media);
+  }),
+);
+
 mediaRouter.post(
   '/',
   upload.array('files', 10),

@@ -9,7 +9,13 @@ import {
 import { adminRateLimit } from '../middleware/rate-limit.js';
 import { mediaRouter } from '../media/router.js';
 import { servicesRouter } from './services-router.js';
-import { clientsRouter, statsRouter, teamRouter, testimonialsRouter } from './collections.js';
+import {
+  clientsRouter,
+  siteDocumentsRouter,
+  statsRouter,
+  teamRouter,
+  testimonialsRouter,
+} from './collections.js';
 import { siteRouter } from './site-router.js';
 import { inquiriesRouter } from './inquiries-router.js';
 import { projectsRouter } from './projects-router.js';
@@ -75,6 +81,7 @@ adminRouter.use('/gallery', galleryRouter);
 adminRouter.use('/team', teamRouter);
 adminRouter.use('/testimonials', testimonialsRouter);
 adminRouter.use('/clients', clientsRouter);
+adminRouter.use('/site-documents', siteDocumentsRouter);
 adminRouter.use('/stats', statsRouter);
 adminRouter.use('/inquiries', inquiriesRouter);
 adminRouter.use('/site', siteRouter);

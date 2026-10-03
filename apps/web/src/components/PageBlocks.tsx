@@ -2,6 +2,7 @@ import Icon from "@/components/ui/AppIcon";
 import AppImage from "@/components/ui/AppImage";
 import { Link } from "@/i18n/navigation";
 import { mediaUrl, type PageBlock } from "@/lib/api/public";
+import RichText from "@/components/RichText";
 
 /**
  * Renders a page's editable blocks.
@@ -64,10 +65,7 @@ function Block({ block, reverse }: { block: PageBlock; reverse: boolean }) {
           )}
 
           {block.body && (
-            // Sanitised by the API on write; see apps/api/src/content/rich-text.ts.
-            <div
-              className="text-ts-muted leading-relaxed [&>p]:mb-4 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-1"
-              dangerouslySetInnerHTML={{ __html: block.body }} />
+            <RichText html={block.body} />
           )}
 
           {block.ctaLabel && block.ctaHref && (

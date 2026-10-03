@@ -85,6 +85,11 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
+      args:
+        # Inlined into the browser bundle during the build; see the note in
+        # web.Dockerfile. Changing it in .env requires a rebuild, not a
+        # restart.
+        NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY:-}
     container_name: teamenergo-web
     restart: unless-stopped
     depends_on:

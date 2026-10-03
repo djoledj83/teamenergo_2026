@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useLocale } from "next-intl";
 import Icon from "@/components/ui/AppIcon";
 import type { PageBlock, ServiceSummary } from "@/lib/api/public";
+import RichText from "@/components/RichText";
+import ContactMap from "@/components/ContactMap";
 
 /**
  * Contact form.
@@ -30,7 +32,8 @@ export default function ContactSection({
   settings = {},
 }: {
   block?: PageBlock | null;
-  services?: ServiceSummary[];
+  /** Only id and title are read, so the homepage can pass a slimmer list. */
+  services?: Array<Pick<ServiceSummary, "id" | "title">>;
   settings?: Record<string, unknown>;
 }) {
   const locale = useLocale();
@@ -67,6 +70,12 @@ export default function ContactSection({
         .join(", "),
     },
   ].filter((entry): entry is { icon: string; label: string; value: string } => Boolean(entry));
+
+  // The map is driven by this same string, so there is one address on the
+  // site rather than an address and a pair of coordinates that can drift.
+  const location = [text("contact.address"), text("contact.city"), text("contact.country")]
+    .filter(Boolean)
+    .join(", ");
 
   const change = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -169,10 +178,7 @@ export default function ContactSection({
               )}
 
               {block?.body && (
-                // Sanitised by the API on write.
-                <div
-                  className="text-ts-muted leading-relaxed max-w-md [&>p]:mb-3 [&>p:last-child]:mb-0"
-                  dangerouslySetInnerHTML={{ __html: block.body }} />
+                <RichText html={block.body} className="max-w-md" />
               )}
             </div>
 
@@ -193,6 +199,8 @@ export default function ContactSection({
                     </div>
                   </div>
                 ))}
+
+                {location && <ContactMap address={location} />}
               </div>
             )}
           </div>
