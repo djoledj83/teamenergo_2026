@@ -166,6 +166,7 @@ model Media {
   projectImages      ProjectImage[]   @relation("ProjectImageMedia")
   teamPhotos         TeamMember[]     @relation("TeamMemberPhoto")
   postCovers         Post[]           @relation("PostCover")
+  postImages         PostImage[]      @relation("PostImageMedia")
   albumCovers        GalleryAlbum[]   @relation("GalleryAlbumCover")
   galleryItems       GalleryItem[]    @relation("GalleryItemMedia")
   testimonialAvatars Testimonial[]    @relation("TestimonialAvatar")
@@ -421,6 +422,7 @@ model Post {
   coverImage   Media?            @relation("PostCover", fields: [coverImageId], references: [id], onDelete: SetNull)
   author       AdminUser?        @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   translations PostTranslation[]
+  images       PostImage[]
   categories   PostCategory[]    @relation("PostToCategory")
 
   @@index([isPublished, publishedAt])
@@ -444,6 +446,25 @@ model PostTranslation {
   @@unique([locale, slug])
   @@index([locale])
   @@map("post_translation")
+}
+
+/// A photo in an article's gallery.
+///
+/// Identical in shape to ProjectImage, deliberately: both are an ordered list
+/// of library images attached to one entity, and one shape means one admin
+/// editor and one lightbox serve both.
+model PostImage {
+  id        String @id @default(cuid())
+  postId    String
+  mediaId   String
+  sortOrder Int    @default(0)
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media Media @relation("PostImageMedia", fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, mediaId])
+  @@index([postId, sortOrder])
+  @@map("post_image")
 }
 
 model PostCategory {

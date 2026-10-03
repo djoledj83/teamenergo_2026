@@ -341,6 +341,7 @@ export async function getPostBySlug(slug: string, locale: Locale) {
     include: {
       translations: true,
       coverImage: { select: mediaSelect },
+      images: { orderBy: { sortOrder: 'asc' }, include: { media: { select: mediaSelect } } },
       categories: { include: { translations: true } },
       author: { select: { name: true } },
     },
@@ -353,6 +354,14 @@ export async function getPostBySlug(slug: string, locale: Locale) {
   return {
     ...flat,
     coverImage: flattenMedia(post.coverImage, locale),
+    // Shaped like an album's items so the gallery component is shared rather
+    // than reimplemented: the lightbox already knows this shape.
+    gallery: post.images.map((image) => ({
+      id: image.id,
+      sortOrder: image.sortOrder,
+      caption: null,
+      media: flattenMedia(image.media, locale),
+    })),
     categories: flattenList(post.categories, locale),
     authorName: post.author?.name ?? null,
   };

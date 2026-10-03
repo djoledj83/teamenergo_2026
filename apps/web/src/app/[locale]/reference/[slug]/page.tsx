@@ -9,6 +9,7 @@ import Icon from "@/components/ui/AppIcon";
 import { getProject, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
 import RichText from "@/components/RichText";
+import PhotoGallery from "@/components/gallery/PhotoGallery";
 
 /** Slugs are per-language; see the note in usluge/[slug]/page.tsx. */
 
@@ -143,17 +144,17 @@ export default async function ProjectDetailPage({
 
       {project.gallery.length > 0 && (
         <section className="px-6 pb-20">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {project.gallery.map((item) => {
-              const src = mediaUrl(item);
-              if (!src) return null;
-              return (
-                <div key={item.id} className="relative aspect-[4/3] rounded-2xl overflow-hidden">
-                  <AppImage src={src} alt={item.alt ?? project.title} fill className="object-cover w-full h-full" />
-                </div>
-              );
-            })}
-          </div>
+          {/* The API sends bare media here; the viewer wants its own shape.
+              Mapping at the call site keeps one gallery component instead of
+              bending either side to fit the other. */}
+          <PhotoGallery
+            className="max-w-7xl mx-auto"
+            items={project.gallery.map((media) => ({
+              id: media.id,
+              media,
+              caption: media.caption,
+            }))}
+          />
         </section>
       )}
     </article>

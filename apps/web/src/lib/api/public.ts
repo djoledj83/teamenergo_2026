@@ -142,6 +142,13 @@ export interface PostSummary {
 export interface PostDetail extends PostSummary {
   body: string | null;
   authorName: string | null;
+  /** Extra photographs, ordered as the admin arranged them. */
+  gallery: Array<{
+    id: string;
+    sortOrder: number;
+    caption: string | null;
+    media: MediaRef | null;
+  }>;
 }
 
 export interface TeamMemberEntry {

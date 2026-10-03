@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Icon from "@/components/ui/AppIcon";
 import AppImage from "@/components/ui/AppImage";
-import { mediaUrl, type AlbumDetail } from "@/lib/api/public";
+import { mediaUrl, type MediaRef } from "@/lib/api/public";
 
 /**
- * An album's photos: a thumbnail grid that opens into a full-screen viewer.
+ * A set of photos: a thumbnail grid that opens into a full-screen viewer.
  *
  * Thumbnails rather than full-width frames, because an album is something you
  * scan before you choose — a dozen photos should fit on one screen, not a
@@ -19,9 +19,29 @@ import { mediaUrl, type AlbumDetail } from "@/lib/api/public";
  * loads in a moment and one that pulls several megabytes per row.
  */
 
-type AlbumItem = AlbumDetail["items"][number];
+/**
+ * The component's own contract, not any one entity's API shape.
+ *
+ * Gallery albums, articles and references all carry an ordered list of photos
+ * and all want the same viewer, but their API payloads differ — an album item
+ * has its own caption, a reference sends bare media. Each call site maps into
+ * this, which is one small adapter per page instead of three gallery
+ * components, or an API shape bent to suit a React component.
+ */
+export interface GalleryPhoto {
+  id: string;
+  media: MediaRef | null;
+  caption: string | null;
+}
 
-export default function AlbumGallery({ items }: { items: AlbumItem[] }) {
+export default function PhotoGallery({
+  items,
+  className = "max-w-5xl mx-auto px-6",
+}: {
+  items: GalleryPhoto[];
+  /** Width and padding, so a page can line the grid up with its own column. */
+  className?: string;
+}) {
   const [open, setOpen] = useState<number | null>(null);
 
   const visible = items.filter((item) => item.media !== null);
@@ -29,9 +49,7 @@ export default function AlbumGallery({ items }: { items: AlbumItem[] }) {
 
   return (
     <>
-      {/* Same max width as the header above it, so the first thumbnail lines
-          up with the title rather than sitting a few pixels to its left. */}
-      <div className="max-w-5xl mx-auto px-6">
+      <div className={className}>
         <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {visible.map((item, index) => {
             const src = mediaUrl(item.media);
@@ -80,7 +98,7 @@ function Lightbox({
   onIndex,
   onClose,
 }: {
-  items: AlbumItem[];
+  items: GalleryPhoto[];
   index: number;
   onIndex: (next: number) => void;
   onClose: () => void;

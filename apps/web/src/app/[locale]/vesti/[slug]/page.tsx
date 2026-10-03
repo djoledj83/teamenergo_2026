@@ -9,6 +9,7 @@ import Icon from "@/components/ui/AppIcon";
 import { getPost, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
 import RichText from "@/components/RichText";
+import PhotoGallery from "@/components/gallery/PhotoGallery";
 
 /**
  * No generateStaticParams — deliberately.
@@ -121,6 +122,17 @@ export default async function PostPage({
           <div className="max-w-3xl mx-auto">
             <RichText html={post.body} />
           </div>
+        </section>
+      )}
+
+      {post.gallery.length > 0 && (
+        <section className="px-6 pb-20">
+          <h2 className="max-w-3xl mx-auto mb-5 font-display text-xl font-bold text-ts-fg">
+            Fotografije
+          </h2>
+          {/* Same measure as the article text above, so the grid starts where
+              the paragraphs do rather than a few pixels to their left. */}
+          <PhotoGallery className="max-w-3xl mx-auto" items={post.gallery} />
         </section>
       )}
     </article>

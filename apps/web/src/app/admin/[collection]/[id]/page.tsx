@@ -4,6 +4,7 @@ import { apiFetch, ApiError } from '@/lib/api/client';
 import { findCollection } from '@/lib/admin/collections';
 import CollectionForm from '@/components/admin/CollectionForm';
 import AlbumItemsEditor, { type AlbumItem } from '@/components/admin/AlbumItemsEditor';
+import MediaListEditor, { type MediaListItem } from '@/components/admin/MediaListEditor';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,21 @@ export default async function CollectionEditPage({
             albumId={id}
             initialItems={(entity.items as AlbumItem[] | undefined) ?? []}
             coverImageId={(entity.coverImageId as string | null | undefined) ?? null}
+          />
+        )}
+
+        {/* Articles and references carry an ordered photo list against the
+            same endpoints, so one editor serves both. */}
+        {(config.key === 'posts' || config.key === 'projects') && (
+          <MediaListEditor
+            endpoint={`${config.key}/${id}`}
+            initialItems={(entity.images as MediaListItem[] | undefined) ?? []}
+            title="Dodatne fotografije"
+            emptyText={
+              config.key === 'posts'
+                ? 'Vest još nema dodatne fotografije.'
+                : 'Referenca još nema dodatne fotografije.'
+            }
           />
         )}
       </div>

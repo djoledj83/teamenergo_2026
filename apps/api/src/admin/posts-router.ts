@@ -1,11 +1,15 @@
 import type { Router } from 'express';
 import { z } from 'zod';
-import { LOCALES, slugSchema, translationsRecord } from '@teamenergo/shared';
+import { LOCALES, reorderSchema, slugSchema, translationsRecord } from '@teamenergo/shared';
 import { prisma } from '../db.js';
 import { richText } from '../content/rich-text.js';
+import { HttpError } from '../errors.js';
+import { asyncHandler } from '../middleware/auth.js';
+import { validateBody } from '../middleware/validate.js';
+import { revalidateEntity } from '../revalidate.js';
 import { missingLocales } from '../content/translations.js';
 import { createCollectionRouter } from './collection-router.js';
-import { resolveSlug, writeTranslations } from './crud.js';
+import { reorderUpdates, resolveSlug, writeTranslations } from './crud.js';
 
 /**
  * News (Vesti) and their categories.
@@ -33,7 +37,13 @@ const updatePostSchema = createPostSchema.partial();
 type CreatePost = z.infer<typeof createPostSchema>;
 type UpdatePost = z.infer<typeof updatePostSchema>;
 
+const postImageInclude = {
+  orderBy: { sortOrder: 'asc' },
+  include: { media: { include: { translations: true } } },
+} as const;
+
 const postInclude = {
+  images: postImageInclude,
   translations: true,
   coverImage: { include: { translations: true } },
   categories: { include: { translations: true } },
@@ -258,3 +268,82 @@ export const postCategoriesRouter: Router = createCollectionRouter<
     );
   },
 });
+
+// ── Gallery images ──────────────────────────────────────────────────────
+// The same three endpoints projects have, against post_image. Articles and
+// references carry an ordered list of library images in an identical shape,
+// which is what lets one admin editor and one lightbox serve both.
+
+const attachPostImagesSchema = z.object({
+  mediaIds: z.array(z.string().min(1)).min(1).max(50),
+});
+
+const postImages = (postId: string) =>
+  prisma.postImage.findMany({ where: { postId }, ...postImageInclude });
+
+postsRouter.post(
+  '/:id/images',
+  validateBody(attachPostImagesSchema),
+  asyncHandler(async (req, res) => {
+    const postId = req.params.id as string;
+    const { mediaIds } = req.body as z.infer<typeof attachPostImagesSchema>;
+
+    if ((await prisma.post.count({ where: { id: postId } })) === 0) {
+      throw HttpError.notFound('Vest ne postoji');
+    }
+
+    const known = await prisma.media.findMany({
+      where: { id: { in: mediaIds } },
+      select: { id: true },
+    });
+    if (known.length !== mediaIds.length) {
+      throw HttpError.badRequest('Neke slike ne postoje u biblioteci');
+    }
+
+    const last = await prisma.postImage.findFirst({
+      where: { postId },
+      orderBy: { sortOrder: 'desc' },
+    });
+    let sortOrder = (last?.sortOrder ?? -1) + 1;
+
+    // skipDuplicates keeps re-attaching an image idempotent rather than
+    // failing on the [postId, mediaId] unique constraint.
+    await prisma.postImage.createMany({
+      data: mediaIds.map((mediaId) => ({ postId, mediaId, sortOrder: sortOrder++ })),
+      skipDuplicates: true,
+    });
+
+    revalidateEntity('Post');
+    res.status(201).json({ items: await postImages(postId) });
+  }),
+);
+
+postsRouter.post(
+  '/:id/images/reorder',
+  validateBody(reorderSchema),
+  asyncHandler(async (req, res) => {
+    const { ids } = req.body as z.infer<typeof reorderSchema>;
+    await prisma.$transaction(
+      reorderUpdates(ids).map((u) =>
+        prisma.postImage.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } }),
+      ),
+    );
+    revalidateEntity('Post');
+    res.status(204).end();
+  }),
+);
+
+postsRouter.delete(
+  '/:id/images/:imageId',
+  asyncHandler(async (req, res) => {
+    const image = await prisma.postImage.findUnique({
+      where: { id: req.params.imageId as string },
+    });
+    if (!image || image.postId !== req.params.id) throw HttpError.notFound();
+
+    // Detaches from the article only; the file stays in the media library.
+    await prisma.postImage.delete({ where: { id: image.id } });
+    revalidateEntity('Post');
+    res.status(204).end();
+  }),
+);

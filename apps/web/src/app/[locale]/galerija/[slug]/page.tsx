@@ -6,7 +6,7 @@ import { routing } from "@/i18n/routing";
 import { Link, redirect } from "@/i18n/navigation";
 import ParallaxCover from "@/components/gallery/ParallaxCover";
 import Icon from "@/components/ui/AppIcon";
-import AlbumGallery from "@/components/gallery/AlbumGallery";
+import PhotoGallery from "@/components/gallery/PhotoGallery";
 import { getAlbum, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
 
@@ -131,7 +131,7 @@ export default async function AlbumPage({
           Album još nema fotografije.
         </p>
       ) : (
-        <AlbumGallery items={album.items} />
+        <PhotoGallery items={album.items} />
       )}
     </article>
   );
