@@ -127,7 +127,7 @@ export async function getPage(key: string, locale: Locale) {
  * only flagged services would be empty until somebody remembered to tick a
  * box, which is a worse default than showing the first few.
  */
-const featuredFirst = [
+const servicesFeaturedFirst = [
   { isFeatured: 'desc' },
   { sortOrder: 'asc' },
 ] satisfies Array<Record<string, 'asc' | 'desc'>>;
@@ -135,7 +135,7 @@ const featuredFirst = [
 export async function listServices(locale: Locale, limit?: number) {
   const services = await prisma.service.findMany({
     where: publishedOnly,
-    orderBy: limit === undefined ? { sortOrder: 'asc' } : featuredFirst,
+    orderBy: limit === undefined ? { sortOrder: 'asc' } : servicesFeaturedFirst,
     ...(limit === undefined ? {} : { take: limit }),
     include: {
       translations: true,
@@ -281,6 +281,8 @@ export async function getProjectBySlug(slug: string, locale: Locale) {
 // ── News ────────────────────────────────────────────────────────────────
 
 interface PostListOptions {
+  /** Flagged articles first, then by date. For the homepage rail. */
+  featuredFirst?: boolean | undefined;
   locale: Locale;
   page: number;
   pageSize: number;
@@ -288,7 +290,7 @@ interface PostListOptions {
 }
 
 export async function listPosts(options: PostListOptions) {
-  const { locale, page, pageSize, categorySlug } = options;
+  const { locale, page, pageSize, categorySlug, featuredFirst } = options;
 
   const where = {
     isPublished: true,
@@ -300,7 +302,12 @@ export async function listPosts(options: PostListOptions) {
     prisma.post.count({ where }),
     prisma.post.findMany({
       where,
-      orderBy: { publishedAt: 'desc' },
+      // "Istaknuto" pins an article to the front of the homepage rail; the
+      // full /vesti listing stays purely chronological, which is what a news
+      // archive should be.
+      orderBy: featuredFirst
+        ? [{ isFeatured: 'desc' as const }, { publishedAt: 'desc' as const }]
+        : { publishedAt: 'desc' as const },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
@@ -534,7 +541,7 @@ export async function getHomepage(locale: Locale) {
       // full records are already in `services` for the part of the page that
       // displays them.
       listServiceOptions(locale),
-      listPosts({ locale, page: 1, pageSize: HOME_POSTS }),
+      listPosts({ locale, page: 1, pageSize: HOME_POSTS, featuredFirst: true }),
       listStats(locale),
       listProjects({ locale, page: 1, pageSize: 3, featuredOnly: true }),
       listTestimonials(locale),

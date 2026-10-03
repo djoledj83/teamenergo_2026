@@ -36,7 +36,11 @@ export type RevalidateTag = (typeof REVALIDATE_TAGS)[keyof typeof REVALIDATE_TAG
 const TAGS_BY_ENTITY: Record<string, RevalidateTag[]> = {
   Service: ['services', 'home'],
   Project: ['projects', 'home'],
-  Post: ['posts'],
+  // 'home' as well as 'posts' since the homepage gained a news rail. An
+  // entity's tags have to list every page it appears on, and this one was
+  // written when articles lived only under /vesti — so a new article
+  // refreshed the news page and left the homepage showing the old set.
+  Post: ['posts', 'home'],
   PostCategory: ['posts'],
   TeamMember: ['team'],
   GalleryAlbum: ['gallery'],
