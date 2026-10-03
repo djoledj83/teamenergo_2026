@@ -55,6 +55,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <PageHero
         title={page?.meta?.title ?? "O nama"}
         iconName="BuildingOffice2Icon"
+        lead={page?.meta?.intro}
       />
       <PageBlocks blocks={page?.blocks ?? []} />
     </>

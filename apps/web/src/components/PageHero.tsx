@@ -1,4 +1,5 @@
 import Icon from "@/components/ui/AppIcon";
+import RichText from "@/components/RichText";
 
 /**
  * Top of every section page.
@@ -18,7 +19,13 @@ export default function PageHero({
   title: string;
   /** Rendered after the title in the red italic treatment. */
   accent?: string;
-  lead?: string;
+  /**
+   * The page's introduction, as sanitised HTML from the admin editor.
+   *
+   * The prop existed and nothing ever passed it, so every page had a slot for
+   * an intro and no way to write one. It now comes from page_translation.
+   */
+  lead?: string | null;
   /** Heroicon name, resolved at runtime by AppIcon. */
   iconName?: string;
 }) {
@@ -44,7 +51,7 @@ export default function PageHero({
           )}
         </h1>
 
-        {lead && <p className="text-ts-muted max-w-2xl leading-relaxed text-lg font-light">{lead}</p>}
+        <RichText html={lead} variant="lead" className="max-w-3xl" />
       </div>
     </section>
   );

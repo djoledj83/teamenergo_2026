@@ -45,9 +45,24 @@ export interface PageData {
 
 const PAGE_FIELDS: FieldConfig[] = [
   { name: 'title', label: 'Naslov stranice', type: 'text', translatable: true, required: true },
+  {
+    name: 'intro',
+    label: 'Uvodni tekst',
+    type: 'richtext',
+    translatable: true,
+    span: 2,
+    help: 'Kratak uvod ispod naslova stranice. Prazno polje se ne prikazuje.',
+  },
   { name: 'seoTitle', label: 'SEO naslov', type: 'text', translatable: true, span: 2 },
   { name: 'seoDescription', label: 'SEO opis', type: 'textarea', translatable: true, span: 2 },
 ];
+
+/**
+ * The home page has no PageHero, so it has nowhere to put an intro — its
+ * opening copy is the hero block's own text. Offering the field there would
+ * be another one that saves cleanly and renders nothing.
+ */
+const PAGE_FIELDS_NO_INTRO = PAGE_FIELDS.filter((field) => field.name !== 'intro');
 
 const BLOCK_FIELDS: FieldConfig[] = [
   { name: 'eyebrow', label: 'Nadnaslov', type: 'text', translatable: true },
@@ -151,6 +166,8 @@ export default function PageEditor({ page }: { page: PageData }) {
   const heading =
     (page.translations.find((t) => t.locale === DEFAULT_LOCALE)?.title as string) ?? page.key;
   const fixed = FIXED_BLOCK_PAGES[page.key];
+  // The home page renders no PageHero, so it has no slot for an intro.
+  const pageFields = page.key === 'home' ? PAGE_FIELDS_NO_INTRO : PAGE_FIELDS;
 
   return (
     <div className="space-y-6">
@@ -184,9 +201,14 @@ export default function PageEditor({ page }: { page: PageData }) {
 
       <Section
         title="Osnovno"
-        description="Naslov stranice i podaci za pretraživače."
-        fields={PAGE_FIELDS}
-        initial={readTranslations(page.translations, PAGE_FIELDS)}
+        description={
+          pageFields === PAGE_FIELDS
+            ? 'Naslov stranice, kratak uvod ispod njega i podaci za pretraživače.'
+            : 'Naslov stranice i podaci za pretraživače. Uvodni tekst početne strane ' +
+              'je tekst u glavnom bloku (hero) ispod.'
+        }
+        fields={pageFields}
+        initial={readTranslations(page.translations, pageFields)}
         locale={locale}
         save={(translations) => adminApi.patch(`site/pages/${page.key}`, { translations })}
         onSaved={() => router.refresh()}

@@ -93,7 +93,13 @@ export interface PageBlock {
 
 export interface PageContent {
   key: string;
-  meta: { title: string; seoTitle: string | null; seoDescription: string | null } | null;
+  meta: {
+    title: string;
+    /** Short rich-text introduction, rendered under the page title. */
+    intro: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+  } | null;
   blocks: PageBlock[];
 }
 

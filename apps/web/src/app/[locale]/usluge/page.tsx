@@ -59,6 +59,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
         title={page?.meta?.title ?? t("servicesHeading")}
         {...(page?.meta?.title ? {} : { accent: t("servicesHeadingAccent") })}
         iconName="WrenchScrewdriverIcon"
+        lead={page?.meta?.intro}
       />
       <PageBlocks blocks={page?.blocks ?? []} />
 

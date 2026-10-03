@@ -47,7 +47,9 @@ export default async function TeamPage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <PageHero title={page?.meta?.title ?? "Tim"} iconName="UserGroupIcon" />
+      <PageHero title={page?.meta?.title ?? "Tim"} iconName="UserGroupIcon"
+        lead={page?.meta?.intro}
+      />
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {team.length > 0 && (

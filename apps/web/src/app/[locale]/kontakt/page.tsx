@@ -51,7 +51,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   return (
     <>
-      <PageHero title={page?.meta?.title ?? "Kontakt"} iconName="EnvelopeIcon" />
+      <PageHero title={page?.meta?.title ?? "Kontakt"} iconName="EnvelopeIcon"
+        lead={page?.meta?.intro}
+      />
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {/* The form brings the contact details with it, so they are not

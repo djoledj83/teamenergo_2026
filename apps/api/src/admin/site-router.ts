@@ -27,6 +27,9 @@ export const siteRouter: Router = Router();
 
 const pageCopySchema = z.object({
   title: z.string().min(1).max(200),
+  // Short enough to stay an introduction. A page that needs more than this
+  // under its title wants a block, which is what blocks are for.
+  intro: richText(2_000),
   seoTitle: z.string().max(200).nullable().optional(),
   seoDescription: z.string().max(400).nullable().optional(),
   ogImageId: z.string().nullable().optional(),
@@ -121,6 +124,7 @@ siteRouter.patch(
             where: { pageKey_locale: { pageKey: key, locale } },
             update: {
               title: copy.title,
+              intro: copy.intro ?? null,
               seoTitle: copy.seoTitle ?? null,
               seoDescription: copy.seoDescription ?? null,
               ogImageId: copy.ogImageId ?? null,
@@ -129,6 +133,7 @@ siteRouter.patch(
               pageKey: key,
               locale,
               title: copy.title,
+              intro: copy.intro ?? null,
               seoTitle: copy.seoTitle ?? null,
               seoDescription: copy.seoDescription ?? null,
               ogImageId: copy.ogImageId ?? null,

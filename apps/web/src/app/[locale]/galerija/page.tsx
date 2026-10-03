@@ -47,7 +47,9 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
 
   return (
     <>
-      <PageHero title={page?.meta?.title ?? "Galerija"} iconName="PhotoIcon" />
+      <PageHero title={page?.meta?.title ?? "Galerija"} iconName="PhotoIcon"
+        lead={page?.meta?.intro}
+      />
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {albums.length > 0 && (

@@ -45,7 +45,9 @@ export default async function NewsPage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <PageHero title={page?.meta?.title ?? "Vesti"} iconName="NewspaperIcon" />
+      <PageHero title={page?.meta?.title ?? "Vesti"} iconName="NewspaperIcon"
+        lead={page?.meta?.intro}
+      />
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {posts.length > 0 && (

@@ -47,7 +47,9 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
 
   return (
     <>
-      <PageHero title={page?.meta?.title ?? "Reference"} iconName="MapPinIcon" />
+      <PageHero title={page?.meta?.title ?? "Reference"} iconName="MapPinIcon"
+        lead={page?.meta?.intro}
+      />
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {projects.length > 0 && (

@@ -665,6 +665,10 @@ model PageTranslation {
   pageKey        String
   locale         String  @db.VarChar(5)
   title          String
+  /// Short rich-text introduction, rendered under the page title.
+  /// Part of the page's identity like its title and SEO copy, rather than a
+  /// block: every page has exactly one and it always sits in the same place.
+  intro          String?
   seoTitle       String?
   seoDescription String?
   ogImageId      String?
