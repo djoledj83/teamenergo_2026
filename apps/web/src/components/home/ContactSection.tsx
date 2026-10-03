@@ -6,6 +6,7 @@ import Icon from "@/components/ui/AppIcon";
 import type { PageBlock, ServiceSummary } from "@/lib/api/public";
 import RichText from "@/components/RichText";
 import ContactMap from "@/components/ContactMap";
+import VideoModal from "@/components/VideoModal";
 
 /**
  * Contact form.
@@ -179,6 +180,10 @@ export default function ContactSection({
 
               {block?.body && (
                 <RichText html={block.body} className="max-w-md" />
+              )}
+
+              {block?.videoUrl && (
+                <VideoModal url={block.videoUrl} label="Pogledajte video" />
               )}
             </div>
 

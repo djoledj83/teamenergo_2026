@@ -84,9 +84,10 @@ const BLOCK_INFO: Record<string, { label: string; description: string }> = {
   video: {
     label: 'Video kompanije',
     description:
-      'Dugme ispod sekcije „U brojkama“ koje otvara snimak u prozoru. Naslov je tekst '
-      + 'iznad dugmeta, „Tekst dugmeta“ je natpis na njemu, a snimak se dodaje u polje '
-      + 'Video. Prazno polje Video znači da se dugme ne prikazuje.',
+      'Posebna sekcija ispod „U brojkama“, sa naslovom i velikim dugmetom koje '
+      + 'otvara snimak u prozoru. „Tekst dugmeta“ je natpis na njemu. Video se može '
+      + 'dodati i na bilo koji drugi blok — tamo se pojavljuje kao manje dugme uz '
+      + 'tekst — a ovaj blok postoji da snimak dobije sekciju za sebe.',
   },
   cta: { label: 'Poziv na akciju', description: 'Traka sa dugmetom.' },
 };
@@ -383,8 +384,9 @@ function Section({
                 type: 'url',
                 help:
                   'Nalepite link ka snimku, npr. https://www.youtube.com/watch?v=… — ' +
-                  'dugme za reprodukciju se pojavljuje samo ako je polje popunjeno. ' +
-                  'Video se učitava tek kada posetilac klikne.',
+                  'dugme „Pogledajte video“ se pojavljuje u OVOM bloku, uz dugme ' +
+                  'poziva na akciju ako ga ima. Prazno polje znači da nema dugmeta. ' +
+                  'Video se učitava tek kada posetilac klikne na njega.',
               }}
               value={videoUrl}
               onChange={(value) => {

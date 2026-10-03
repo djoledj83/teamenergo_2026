@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import TickerBar from "@/components/home/TickerBar";
 import { mediaUrl, type ClientEntry, type PageBlock, type StatEntry } from "@/lib/api/public";
 import RichText from "@/components/RichText";
+import VideoModal from "@/components/VideoModal";
 
 /**
  * Homepage hero.
@@ -120,13 +121,20 @@ export default function HeroSection({
               <RichText html={block.body} variant="lead" className="max-w-lg" />
             )}
 
-            {block.ctaLabel && block.ctaHref && (
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href={block.ctaHref}
-                  className="bg-ts-red text-black px-8 py-4 rounded-full font-bold text-sm hover:bg-amber-400 transition-all hover:scale-105 shadow-lg shadow-amber-900/20">
-                  {block.ctaLabel}
-                </Link>
+            {/* The video field is offered on every block in the admin, so
+                every block that renders has to honour it — a field that works
+                on one block and silently does nothing on the others is the
+                worst of both. Here it sits beside the call to action. */}
+            {((block.ctaLabel && block.ctaHref) || block.videoUrl) && (
+              <div className="flex flex-wrap items-center gap-4">
+                {block.ctaLabel && block.ctaHref && (
+                  <Link
+                    href={block.ctaHref}
+                    className="bg-ts-red text-black px-8 py-4 rounded-full font-bold text-sm hover:bg-amber-400 transition-all hover:scale-105 shadow-lg shadow-amber-900/20">
+                    {block.ctaLabel}
+                  </Link>
+                )}
+                <VideoModal url={block.videoUrl} label="Pogledajte video" />
               </div>
             )}
 

@@ -3,6 +3,7 @@ import AppImage from "@/components/ui/AppImage";
 import { Link } from "@/i18n/navigation";
 import { mediaUrl, type PageBlock } from "@/lib/api/public";
 import RichText from "@/components/RichText";
+import VideoModal from "@/components/VideoModal";
 
 /**
  * Renders a page's editable blocks.
@@ -71,13 +72,18 @@ function Block({ block, reverse }: { block: PageBlock; reverse: boolean }) {
             <RichText html={block.body} />
           )}
 
-          {block.ctaLabel && block.ctaHref && (
-            <Link
-              href={block.ctaHref}
-              className="inline-flex items-center gap-2 text-sm font-bold text-ts-fg border-b border-ts-red pb-1 hover:gap-3 transition-all">
-              {block.ctaLabel}
-              <Icon name="ArrowRightIcon" size={14} className="text-ts-red" />
-            </Link>
+          {((block.ctaLabel && block.ctaHref) || block.videoUrl) && (
+            <div className="flex flex-wrap items-center gap-5 pt-1">
+              {block.ctaLabel && block.ctaHref && (
+                <Link
+                  href={block.ctaHref}
+                  className="inline-flex items-center gap-2 text-sm font-bold text-ts-fg border-b border-ts-red pb-1 hover:gap-3 transition-all">
+                  {block.ctaLabel}
+                  <Icon name="ArrowRightIcon" size={14} className="text-ts-red" />
+                </Link>
+              )}
+              <VideoModal url={block.videoUrl} label="Pogledajte video" />
+            </div>
           )}
         </div>
 
