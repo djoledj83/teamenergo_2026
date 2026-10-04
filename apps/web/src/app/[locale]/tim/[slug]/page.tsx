@@ -111,7 +111,7 @@ export default async function TeamMemberPage({
               <p className="text-ts-muted leading-relaxed whitespace-pre-line">{member.bio}</p>
             )}
 
-            {(member.email || member.linkedinUrl) && (
+            {(member.email || member.phone || member.linkedinUrl) && (
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 {member.email && (
                   <a
@@ -119,6 +119,14 @@ export default async function TeamMemberPage({
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-ts-border text-sm font-semibold text-ts-muted hover:text-ts-fg hover:border-ts-red transition-all">
                     <Icon name="EnvelopeIcon" size={15} />
                     {member.email}
+                  </a>
+                )}
+                {member.phone && (
+                  <a
+                    href={`tel:${member.phone.replace(/\s+/g, '')}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-ts-border text-sm font-semibold text-ts-muted hover:text-ts-fg hover:border-ts-red transition-all">
+                    <Icon name="PhoneIcon" size={15} />
+                    {member.phone}
                   </a>
                 )}
                 {member.linkedinUrl && (

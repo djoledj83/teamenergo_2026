@@ -112,9 +112,10 @@ function MemberBody({ member }: { member: TeamMemberEntry }) {
           <p className="text-sm text-ts-muted leading-relaxed line-clamp-3">{member.bio}</p>
         )}
 
-        {(member.email || member.linkedinUrl) && (
+        {(member.email || member.phone || member.linkedinUrl) && (
           <div className="flex items-center gap-3 pt-2 text-ts-muted">
             {member.email && <Icon name="EnvelopeIcon" size={15} />}
+            {member.phone && <Icon name="PhoneIcon" size={15} />}
             {member.linkedinUrl && <Icon name="GlobeAltIcon" size={15} />}
           </div>
         )}

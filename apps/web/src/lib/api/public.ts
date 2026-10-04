@@ -164,6 +164,7 @@ export interface TeamMemberEntry {
   role: string | null;
   bio: string | null;
   email: string | null;
+  phone: string | null;
   linkedinUrl: string | null;
   photo: MediaRef | null;
 }
