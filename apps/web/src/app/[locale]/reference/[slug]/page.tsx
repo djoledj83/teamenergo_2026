@@ -99,7 +99,10 @@ export default async function ProjectDetailPage({
             {project.title}
           </h1>
           {project.summary && (
-            <p className="text-ts-muted max-w-2xl leading-relaxed text-lg font-light">
+            // Full container width, like the cover, the metrics and the body
+            // below it. A narrower measure here read as a layout fault rather
+            // than a choice, because everything it sits above is wider.
+            <p className="text-ts-muted leading-relaxed text-lg font-light">
               {project.summary}
             </p>
           )}
@@ -136,7 +139,7 @@ export default async function ProjectDetailPage({
 
       {project.body && (
         <section className="px-6 py-16">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <RichText html={project.body} />
           </div>
         </section>

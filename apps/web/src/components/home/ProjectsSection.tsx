@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
+import { Link } from "@/i18n/navigation";
 import { sectionCopy } from "@/lib/section-copy";
 import { mediaUrl, type ProjectSummary, type PageBlock } from "@/lib/api/public";
 
@@ -103,9 +104,14 @@ function ProjectCard({
         ? "bg-ts-red text-white"
         : "bg-blue-500/80 text-white";
 
+  // A link, not a card with a hover effect. It had the hover effect and no
+  // link, so it looked interactive from the home page and did nothing — the
+  // same card on /reference has always opened the project. Same href, same
+  // focus ring, so the two behave alike wherever you meet them.
   return (
-    <div
-      className={`group bg-ts-surface border border-ts-border rounded-[32px] overflow-hidden hover:border-ts-red/30 transition-all duration-400 ${className}`}>
+    <Link
+      href={`/reference/${project.slug}`}
+      className={`group block bg-ts-surface border border-ts-border rounded-[32px] overflow-hidden hover:border-ts-red/30 transition-all duration-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red ${className}`}>
       <div className={`flex flex-col ${reverse ? "lg:flex-row-reverse" : "lg:flex-row"} h-full`}>
         {/* Image */}
         {image && (
@@ -163,6 +169,6 @@ function ProjectCard({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
