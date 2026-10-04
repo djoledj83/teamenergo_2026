@@ -7,6 +7,7 @@ import PageHero from "@/components/PageHero";
 import PageBlocks from "@/components/PageBlocks";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
+import SocialIcon from "@/components/ui/SocialIcon";
 import { Link } from "@/i18n/navigation";
 import { getPage, getTeam, mediaUrl, type TeamMemberEntry } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
@@ -172,7 +173,7 @@ function MemberBody({ member }: { member: TeamMemberEntry }) {
           <div className="flex items-center gap-3 pt-2 text-ts-muted">
             {member.email && <Icon name="EnvelopeIcon" size={15} />}
             {member.phone && <Icon name="PhoneIcon" size={15} />}
-            {member.linkedinUrl && <Icon name="GlobeAltIcon" size={15} />}
+            {member.linkedinUrl && <SocialIcon brand="linkedin" size={15} />}
           </div>
         )}
       </div>

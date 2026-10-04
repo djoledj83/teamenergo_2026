@@ -1,6 +1,7 @@
 import Image from "next/image";
 import AppLogo from "@/components/ui/AppLogo";
 import Icon from "@/components/ui/AppIcon";
+import SocialIcon from "@/components/ui/SocialIcon";
 import { Link } from "@/i18n/navigation";
 import {
   downloadUrl,
@@ -73,9 +74,9 @@ export default function Footer({
     .join(", ");
 
   const social = [
-    { key: "social.linkedin", label: "LinkedIn", icon: "GlobeAltIcon" as const },
-    { key: "social.instagram", label: "Instagram", icon: "ChatBubbleLeftRightIcon" as const },
-    { key: "social.facebook", label: "Facebook", icon: "ChatBubbleLeftRightIcon" as const },
+    { key: "social.linkedin", label: "LinkedIn", brand: "linkedin" as const },
+    { key: "social.instagram", label: "Instagram", brand: "instagram" as const },
+    { key: "social.facebook", label: "Facebook", brand: "facebook" as const },
   ]
     .map((entry) => ({ ...entry, url: text(entry.key) }))
     .filter((entry): entry is typeof entry & { url: string } => entry.url !== null);
@@ -112,7 +113,7 @@ export default function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full border border-ts-border flex items-center justify-center text-ts-muted hover:text-ts-fg hover:border-ts-red transition-all">
-                  <Icon name={entry.icon} size={16} />
+                  <SocialIcon brand={entry.brand} size={16} />
                 </a>
               ))}
               {email && (
