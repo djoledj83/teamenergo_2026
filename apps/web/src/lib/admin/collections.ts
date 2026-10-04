@@ -262,6 +262,12 @@ export const ADMIN_COLLECTIONS: AdminCollection[] = [
       { name: 'email', label: 'Email', type: 'email' },
       { name: 'phone', label: 'Telefon', type: 'text' },
       { name: 'linkedinUrl', label: 'LinkedIn', type: 'url' },
+      {
+        name: 'isManagement',
+        label: 'Rukovodstvo',
+        type: 'boolean',
+        help: 'Prikazuje se u prvom redu na stranici Tim, iznad ostalih članova.',
+      },
     ],
   },
   {

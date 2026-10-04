@@ -166,6 +166,8 @@ export interface TeamMemberEntry {
   email: string | null;
   phone: string | null;
   linkedinUrl: string | null;
+  /** Leads the team page in a row of its own. */
+  isManagement: boolean;
   photo: MediaRef | null;
 }
 

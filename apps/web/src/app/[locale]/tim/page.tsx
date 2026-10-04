@@ -45,6 +45,11 @@ export default async function TeamPage({ params }: { params: Promise<{ locale: s
       }),
   ]);
 
+  // The API already returns management first, so a single partition keeps
+  // both groups in their configured order.
+  const management = team.filter((member) => member.isManagement);
+  const others = team.filter((member) => !member.isManagement);
+
   return (
     <>
       <PageHero title={page?.meta?.title ?? "Tim"} iconName="UserGroupIcon"
@@ -53,18 +58,69 @@ export default async function TeamPage({ params }: { params: Promise<{ locale: s
       <PageBlocks blocks={page?.blocks ?? []} />
 
       {team.length > 0 && (
-        <section className="py-16 px-6">
-          {/* Four across on a wide screen rather than three, which makes each
-              card — and so each photo, since its height follows the width
-              through the aspect ratio — about a quarter smaller. */}
-          <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {team.map((member) => (
-              <Member key={member.id} member={member} />
-            ))}
-          </div>
+        <section className="py-16 px-6 space-y-14">
+          {management.length > 0 && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Headings only when there are two groups to tell apart. With
+                  nobody marked as management the page is one plain grid, as
+                  it was. */}
+              {others.length > 0 && <GroupHeading>Rukovodstvo</GroupHeading>}
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${
+                  MANAGEMENT_COLUMNS[management.length] ?? "lg:grid-cols-3"
+                }`}>
+                {management.map((member) => (
+                  <Member key={member.id} member={member} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {others.length > 0 && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              {management.length > 0 && <GroupHeading>Tim</GroupHeading>}
+              {/* Four across on a wide screen rather than three, which makes
+                  each card — and so each photo, since its height follows the
+                  width through the aspect ratio — about a quarter smaller. */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {others.map((member) => (
+                  <Member key={member.id} member={member} />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </>
+  );
+}
+
+/**
+ * How many columns the management row uses: one per person, so three managers
+ * fill the row and each card is wider than the four-across grid below.
+ *
+ * A lookup rather than an interpolated class name — Tailwind scans source
+ * text for complete class names, so `lg:grid-cols-${n}` compiles to nothing
+ * and the row silently collapses to one column.
+ *
+ * A lone manager is capped instead of being stretched across 1280px, which
+ * would make the photo taller than the viewport. Past four the row falls back
+ * to three columns rather than four: wrapping at four would make the cards
+ * exactly the size of the team grid below and lose the distinction the row
+ * exists to make.
+ */
+const MANAGEMENT_COLUMNS: Record<number, string> = {
+  1: "lg:grid-cols-1 lg:max-w-sm",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+};
+
+function GroupHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="font-display text-sm font-bold text-ts-muted uppercase tracking-widest">
+      {children}
+    </h2>
   );
 }
 

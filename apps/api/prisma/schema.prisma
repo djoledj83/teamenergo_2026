@@ -370,6 +370,8 @@ model TeamMember {
   email       String?
   phone       String?
   linkedinUrl String?
+  /// Shown in the leading row on the team page, above everyone else.
+  isManagement Boolean @default(false)
   sortOrder   Int      @default(0)
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -379,6 +381,7 @@ model TeamMember {
   translations TeamMemberTranslation[]
 
   @@index([isPublished, sortOrder])
+  @@index([isManagement, sortOrder])
   @@map("team_member")
 }
 

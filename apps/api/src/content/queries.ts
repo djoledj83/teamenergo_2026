@@ -401,7 +401,9 @@ export async function getTeamMemberBySlug(slug: string, locale: Locale) {
 export async function listTeam(locale: Locale) {
   const members = await prisma.teamMember.findMany({
     where: publishedOnly,
-    orderBy: { sortOrder: 'asc' },
+    // Management first so the page can take the leading group off the front
+    // without sorting again; sortOrder arranges within each group.
+    orderBy: [{ isManagement: 'desc' }, { sortOrder: 'asc' }],
     include: { translations: true, photo: { select: mediaSelect } },
   });
 

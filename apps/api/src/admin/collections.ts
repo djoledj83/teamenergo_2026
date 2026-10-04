@@ -34,6 +34,7 @@ const createTeamSchema = publishableSchema.extend({
   email: z.string().email().nullable().optional(),
   phone: z.string().max(40).nullable().optional(),
   linkedinUrl: z.string().url().nullable().optional(),
+  isManagement: z.boolean().optional(),
   translations: translationsRecord(teamCopySchema),
 });
 const updateTeamSchema = createTeamSchema.partial();
@@ -65,6 +66,7 @@ export const teamRouter: Router = createCollectionRouter<CreateTeam, UpdateTeam>
           email: input.email ?? null,
           phone: input.phone ?? null,
           linkedinUrl: input.linkedinUrl ?? null,
+          isManagement: input.isManagement ?? false,
           isPublished: input.isPublished ?? false,
           sortOrder: input.sortOrder ?? 0,
         },
@@ -93,6 +95,7 @@ export const teamRouter: Router = createCollectionRouter<CreateTeam, UpdateTeam>
           ...(input.email !== undefined ? { email: input.email } : {}),
           ...(input.phone !== undefined ? { phone: input.phone } : {}),
           ...(input.linkedinUrl !== undefined ? { linkedinUrl: input.linkedinUrl } : {}),
+          ...(input.isManagement !== undefined ? { isManagement: input.isManagement } : {}),
           ...(input.isPublished !== undefined ? { isPublished: input.isPublished } : {}),
           ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
         },
