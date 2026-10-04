@@ -125,7 +125,13 @@ function ServiceCard({ service }: { service: ServiceSummary }) {
             {service.title}
           </h2>
           {service.summary && (
-            <p className="text-ts-muted text-sm leading-relaxed">{service.summary}</p>
+            // Three lines on the card, the whole summary on the service's own
+            // page — the same cut the home page and the team cards use. These
+            // sit in a grid, so one long summary stretched its entire row and
+            // left the cards beside it with dead space under their text.
+            <p className="text-ts-muted text-sm leading-relaxed line-clamp-3">
+              {service.summary}
+            </p>
           )}
         </div>
 
