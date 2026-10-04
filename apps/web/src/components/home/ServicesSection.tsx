@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { Link } from "@/i18n/navigation";
-import { mediaUrl, type ServiceSummary } from "@/lib/api/public";
+import { sectionCopy } from "@/lib/section-copy";
+import { mediaUrl, type ServiceSummary, type PageBlock } from "@/lib/api/public";
 
 /**
  * Bento rhythm.
@@ -28,11 +29,19 @@ const isWide = (index: number) => index % SPANS.length === 4;
 export default function ServicesSection({
   services,
   total,
+  block,
 }: {
   services: ServiceSummary[];
   /** How many are published in all; the API sends only the first few. */
   total?: number;
+  /** Heading copy for this section, edited on the home page. */
+  block?: PageBlock | null;
 }) {
+  const copy = sectionCopy(block, {
+    eyebrow: "Naše usluge",
+    heading: "Šta gradimo i",
+    accent: "napajamo.",
+  });
   const sectionRef = useRef<HTMLElement>(null);
   const hasMore = (total ?? services.length) > services.length;
 
@@ -63,16 +72,25 @@ export default function ServicesSection({
         {/* Header */}
         <div className="reveal-hidden flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
-              <Icon name="WrenchScrewdriverIcon" size={14} className="text-ts-red" />
-              <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
-                Naše usluge
-              </span>
-            </div>
-            <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
-              Šta gradimo i{" "}
-              <span className="text-gradient-red italic">napajamo.</span>
-            </h2>
+            {copy.eyebrow && (
+              <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
+                <Icon name="WrenchScrewdriverIcon" size={14} className="text-ts-red" />
+                <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
+                  {copy.eyebrow}
+                </span>
+              </div>
+            )}
+            {(copy.heading || copy.accent) && (
+              <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
+                {copy.heading}
+                {copy.accent && (
+                  <>
+                    {" "}
+                    <span className="text-gradient-red italic">{copy.accent}</span>
+                  </>
+                )}
+              </h2>
+            )}
           </div>
 
           {/* Only when there is in fact more to see — a "view all" that leads

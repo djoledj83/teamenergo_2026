@@ -3,9 +3,22 @@
 import { useEffect, useRef } from "react";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
-import { mediaUrl, type ProjectSummary } from "@/lib/api/public";
+import { sectionCopy } from "@/lib/section-copy";
+import { mediaUrl, type ProjectSummary, type PageBlock } from "@/lib/api/public";
 
-export default function ProjectsSection({ projects }: { projects: ProjectSummary[] }) {
+export default function ProjectsSection({
+  projects,
+  block,
+}: {
+  projects: ProjectSummary[];
+  /** Heading copy for this section, edited on the home page. */
+  block?: PageBlock | null;
+}) {
+  const copy = sectionCopy(block, {
+    eyebrow: "Najznačajniji projekti",
+    heading: "Reference iz",
+    accent: "prakse.",
+  });
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -36,16 +49,25 @@ export default function ProjectsSection({ projects }: { projects: ProjectSummary
         {/* Header */}
         <div className="reveal-hidden flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
-              <Icon name="MapPinIcon" size={14} className="text-ts-red" />
-              <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
-                Najznačajniji projekti
-              </span>
-            </div>
-            <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
-              Reference iz{" "}
-              <span className="text-gradient-red italic">prakse.</span>
-            </h2>
+            {copy.eyebrow && (
+              <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
+                <Icon name="MapPinIcon" size={14} className="text-ts-red" />
+                <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
+                  {copy.eyebrow}
+                </span>
+              </div>
+            )}
+            {(copy.heading || copy.accent) && (
+              <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
+                {copy.heading}
+                {copy.accent && (
+                  <>
+                    {" "}
+                    <span className="text-gradient-red italic">{copy.accent}</span>
+                  </>
+                )}
+              </h2>
+            )}
           </div>
         </div>
 

@@ -75,18 +75,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <HeroSection block={block("hero")} stats={stats} clients={clients} />
-      <ServicesSection services={services} total={servicesTotal} />
+      <ServicesSection services={services} total={servicesTotal} block={block("services")} />
 
       {/* Cards are rendered here, on the server, and passed in as children:
           the rail needs client state for its arrows, the cards need none, and
           this keeps eight of them out of the client bundle. */}
-      <NewsSection count={posts.length} total={postsTotal}>
+      <NewsSection count={posts.length} total={postsTotal} block={block("news")}>
         {posts.map((post) => (
           <PostCard key={post.id} post={post} locale={locale} />
         ))}
       </NewsSection>
 
-      <StatsSection stats={stats} />
+      <StatsSection stats={stats} block={block("stats")} />
 
       {videoBlock?.videoUrl && (
         <section className="pb-32 px-6">
@@ -104,8 +104,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </section>
       )}
 
-      <ProjectsSection projects={projects} />
-      <TestimonialSection testimonials={testimonials} clients={clients} />
+      <ProjectsSection projects={projects} block={block("projects")} />
+      <TestimonialSection
+        testimonials={testimonials}
+        clients={clients}
+        block={block("testimonials")}
+      />
       <ContactSection
         block={block("contact")}
         services={serviceOptions}

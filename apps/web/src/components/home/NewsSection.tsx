@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/AppIcon";
 import { Link } from "@/i18n/navigation";
+import { sectionCopy } from "@/lib/section-copy";
+import type { PageBlock } from "@/lib/api/public";
 
 /**
  * Latest news, as a horizontal rail.
@@ -20,12 +22,16 @@ export default function NewsSection({
   children,
   count,
   total,
+  block,
 }: {
   /** Pre-rendered PostCards, so the cards stay off the client bundle. */
   children: React.ReactNode;
   count: number;
   total?: number;
+  /** Heading copy for this section, edited on the home page. */
+  block?: PageBlock | null;
 }) {
+  const copy = sectionCopy(block, { eyebrow: "Vesti", heading: "Šta je", accent: "novo." });
   const rail = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -71,15 +77,25 @@ export default function NewsSection({
       <div className="max-w-7xl mx-auto space-y-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
-              <Icon name="NewspaperIcon" size={14} className="text-ts-red" />
-              <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
-                Vesti
-              </span>
-            </div>
-            <h2 className="font-display text-[clamp(2rem,4vw,3rem)] font-black text-ts-fg leading-tight tracking-tight">
-              Šta je <span className="text-gradient-red italic">novo.</span>
-            </h2>
+            {copy.eyebrow && (
+              <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
+                <Icon name="NewspaperIcon" size={14} className="text-ts-red" />
+                <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
+                  {copy.eyebrow}
+                </span>
+              </div>
+            )}
+            {(copy.heading || copy.accent) && (
+              <h2 className="font-display text-[clamp(2rem,4vw,3rem)] font-black text-ts-fg leading-tight tracking-tight">
+                {copy.heading}
+                {copy.accent && (
+                  <>
+                    {" "}
+                    <span className="text-gradient-red italic">{copy.accent}</span>
+                  </>
+                )}
+              </h2>
+            )}
           </div>
 
           <div className="flex items-center gap-3 flex-shrink-0">

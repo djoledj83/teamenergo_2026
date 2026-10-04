@@ -235,9 +235,11 @@ async function seedPages() {
 }
 
 // No 'intro' block for the home page. The home page is a composed layout
-// that reads 'hero', 'video' and 'contact' by name and renders nothing else,
-// so seeding an intro there created content that was editable, saveable and
-// invisible. Pages ending in <PageBlocks> take any key; this one does not.
+// that looks its blocks up by key and renders nothing else, so seeding an
+// intro there created content that was editable, saveable and invisible.
+// Pages ending in <PageBlocks> take any key; this one does not — the keys it
+// reads are listed in PageEditor's FIXED_BLOCK_PAGES, which has to agree
+// with this list and with the home page itself.
 const PAGE_BLOCKS = [
   {
     id: 'blk_home_hero',
@@ -313,6 +315,121 @@ const PAGE_BLOCKS = [
       body:
         '<p>Send us the essentials — scope, timeline and technical requirements ' +
         '— and we will come back with the next steps.</p>',
+      ctaLabel: null,
+      ctaHref: null,
+    },
+  },
+  // The heading above each of the home page's five content sections. These
+  // lines were written into the components, which made them uneditable and
+  // Serbian on the English site. The components still carry them as a
+  // fallback for a missing row, so this seed is what turns them on.
+  {
+    id: 'blk_home_services',
+    pageKey: 'home',
+    blockKey: 'services',
+    sortOrder: 3,
+    sr: {
+      eyebrow: 'Naše usluge',
+      heading: 'Šta gradimo i',
+      subheading: 'napajamo.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: 'Our services',
+      heading: 'What we build and',
+      subheading: 'power.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+  },
+  {
+    id: 'blk_home_news',
+    pageKey: 'home',
+    blockKey: 'news',
+    sortOrder: 4,
+    sr: {
+      eyebrow: 'Vesti',
+      heading: 'Šta je',
+      subheading: 'novo.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: 'News',
+      heading: "What's",
+      subheading: 'new.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+  },
+  {
+    id: 'blk_home_stats',
+    pageKey: 'home',
+    blockKey: 'stats',
+    sortOrder: 5,
+    sr: {
+      eyebrow: 'U brojkama',
+      heading: 'Neka brojke',
+      subheading: 'same kažu.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: 'By the numbers',
+      heading: 'Let the figures',
+      subheading: 'speak.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+  },
+  {
+    id: 'blk_home_projects',
+    pageKey: 'home',
+    blockKey: 'projects',
+    sortOrder: 6,
+    sr: {
+      eyebrow: 'Najznačajniji projekti',
+      heading: 'Reference iz',
+      subheading: 'prakse.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: 'Selected projects',
+      heading: 'Work from',
+      subheading: 'the field.',
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+  },
+  {
+    // Eyebrow only: this section has no large heading above it.
+    id: 'blk_home_testimonials',
+    pageKey: 'home',
+    blockKey: 'testimonials',
+    sortOrder: 7,
+    sr: {
+      eyebrow: 'Šta nas izdvaja',
+      heading: null,
+      subheading: null,
+      body: null,
+      ctaLabel: null,
+      ctaHref: null,
+    },
+    en: {
+      eyebrow: 'What sets us apart',
+      heading: null,
+      subheading: null,
+      body: null,
       ctaLabel: null,
       ctaHref: null,
     },

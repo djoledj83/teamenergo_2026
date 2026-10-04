@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/AppIcon";
-import type { StatEntry } from "@/lib/api/public";
+import type { PageBlock, StatEntry } from "@/lib/api/public";
+import { sectionCopy } from "@/lib/section-copy";
 
 function useCountUp(target: number, duration = 2000, isDecimal = false) {
   const [count, setCount] = useState(0);
@@ -88,7 +89,19 @@ function StatItem({ stat }: { stat: StatEntry }) {
   );
 }
 
-export default function StatsSection({ stats }: { stats: StatEntry[] }) {
+export default function StatsSection({
+  stats,
+  block,
+}: {
+  stats: StatEntry[];
+  /** Heading copy for this section, edited on the home page. */
+  block?: PageBlock | null;
+}) {
+  const copy = sectionCopy(block, {
+    eyebrow: "U brojkama",
+    heading: "Neka brojke",
+    accent: "same kažu.",
+  });
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -126,19 +139,31 @@ export default function StatsSection({ stats }: { stats: StatEntry[] }) {
       <div className="absolute inset-0 grid-lines opacity-40 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-16">
-        {/* Header */}
-        <div className="reveal-hidden text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
-            <Icon name="ChartBarIcon" size={14} className="text-ts-red" />
-            <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
-              U brojkama
-            </span>
+        {/* Header. Both lines cleared in the admin, it goes entirely rather
+            than leaving an empty box holding the gap below it open. */}
+        {(copy.eyebrow || copy.heading || copy.accent) && (
+          <div className="reveal-hidden text-center space-y-4">
+            {copy.eyebrow && (
+              <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
+                <Icon name="ChartBarIcon" size={14} className="text-ts-red" />
+                <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
+                  {copy.eyebrow}
+                </span>
+              </div>
+            )}
+            {(copy.heading || copy.accent) && (
+              <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
+                {copy.heading}
+                {copy.accent && (
+                  <>
+                    {" "}
+                    <span className="text-gradient-red italic">{copy.accent}</span>
+                  </>
+                )}
+              </h2>
+            )}
           </div>
-          <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] font-black text-ts-fg leading-tight tracking-tight">
-            Neka brojke{" "}
-            <span className="text-gradient-red italic">same kažu.</span>
-          </h2>
-        </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

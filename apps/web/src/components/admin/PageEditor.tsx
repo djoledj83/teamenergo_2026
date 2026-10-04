@@ -79,6 +79,10 @@ const BLOCK_FIELDS: FieldConfig[] = [
   },
 ];
 
+/** The subset of BLOCK_FIELDS a particular block actually renders. */
+const only = (...names: string[]) =>
+  BLOCK_FIELDS.filter((field) => names.includes(field.name));
+
 /**
  * Friendlier names for the blocks the seed creates, and a line saying what
  * each one actually controls on the site.
@@ -105,32 +109,137 @@ const BLOCK_INFO: Record<string, { label: string; description: string }> = {
       + 'tekst — a ovaj blok postoji da snimak dobije sekciju za sebe.',
   },
   cta: { label: 'Poziv na akciju', description: 'Traka sa dugmetom.' },
+  contact: {
+    label: 'Kontakt sekcija',
+    description:
+      'Poslednja sekcija početne strane, sa formom za upit. Nadnaslov, naslov, '
+      + 'podnaslov u crvenom kurzivu i tekst levo od forme. Adresa, telefon i '
+      + 'e-pošta se uređuju u meniju Podešavanja.',
+  },
+  services: {
+    label: 'Naslov iznad usluga',
+    description:
+      'Nadnaslov i naslov sekcije „Naše usluge“ na početnoj. Podnaslov je deo '
+      + 'naslova koji se prikazuje crvenim kurzivom. Same usluge se uređuju u meniju Usluge.',
+  },
+  news: {
+    label: 'Naslov iznad vesti',
+    description:
+      'Nadnaslov i naslov sekcije sa vestima na početnoj. Podnaslov je deo naslova '
+      + 'u crvenom kurzivu. Vesti se uređuju u meniju Vesti.',
+  },
+  stats: {
+    label: 'Naslov iznad brojki',
+    description:
+      'Nadnaslov i naslov sekcije „U brojkama“. Podnaslov je deo naslova u crvenom '
+      + 'kurzivu. Same brojke se uređuju u meniju Statistika.',
+  },
+  projects: {
+    label: 'Naslov iznad referenci',
+    description:
+      'Nadnaslov i naslov sekcije sa referencama na početnoj. Podnaslov je deo '
+      + 'naslova u crvenom kurzivu. Reference se uređuju u meniju Reference.',
+  },
+  testimonials: {
+    label: 'Naslov iznad izjava',
+    description:
+      'Nadnaslov sekcije sa izjavama — ona nema veliki naslov, pa se Naslov i '
+      + 'Podnaslov ovde ne prikazuju. Izjave se uređuju u meniju Izjave.',
+  },
 };
 
 /**
+ * A block that is only the heading above a section whose content lives in its
+ * own menu. No image, no video, and no visibility switch: the section appears
+ * when it has something to show, and hiding the block would only put the text
+ * built into the page back in its place.
+ */
+const TITLE_ONLY = { image: false, video: false, visible: false } as const;
+
+/**
+ * What one block of a fixed-layout page offers. Everything defaults to on,
+ * so a block listed as `{}` gets the full form.
+ */
+interface FixedBlock {
+  /** Narrowed when the section reads only some of the text fields. */
+  fields?: FieldConfig[];
+  image?: boolean;
+  video?: boolean;
+  /** Whether hiding the block actually hides anything. */
+  visible?: boolean;
+}
+
+/**
  * Which pages render whatever blocks they are given, and which only read
- * specific keys.
+ * specific keys — and, for those, exactly which fields of each.
  *
  * Most pages end with <PageBlocks>, which renders every visible block in
- * order — so a new block there appears on the site. The home page does not:
- * it is a composed layout that looks up three keys by name and ignores
- * everything else. Adding a block to it used to be possible, pointless and
- * completely silent — you filled it in, saved, and nothing appeared anywhere,
- * with nothing on screen to say why.
+ * order and reads every field of it, so a new block there appears on the site
+ * in full. The home page does not: it is a composed layout that looks up each
+ * key by name, renders it with its own component, and ignores both the keys
+ * and the fields that component does not read. Adding a block to it used to
+ * be possible, pointless and completely silent — you filled it in, saved, and
+ * nothing appeared anywhere, with nothing on screen to say why. The same was
+ * true field by field: a rich-text body on the services title, a button on
+ * the video section, an image on the contact block.
  *
- * Listing the keys here is a second place that has to agree with the page
- * components, which is the same coupling BLOCK_INFO already has. The
- * alternative — the API telling the admin what each page renders — means the
- * server knowing about the front end, which is worse.
+ * So the declaration is per page, not per block key: the same key on a page
+ * that ends in <PageBlocks> does render all of it, and must keep every field.
+ *
+ * This is a second place that has to agree with the page components, which is
+ * the same coupling BLOCK_INFO already has. The alternative — the API telling
+ * the admin what each page renders — means the server knowing about the front
+ * end, which is worse.
  */
-const FIXED_BLOCK_PAGES: Record<string, { keys: string[]; note: string }> = {
+interface FixedPage {
+  blocks: Record<string, FixedBlock>;
+  note: string;
+}
+
+const FIXED_BLOCK_PAGES: Record<string, FixedPage> = {
   home: {
-    keys: ['hero', 'video', 'contact'],
+    // In the order the page renders them, which is the order they are listed
+    // in; orderBlocks() below puts the form in the same order.
+    blocks: {
+      hero: {},
+      services: { fields: only('eyebrow', 'heading', 'subheading'), ...TITLE_ONLY },
+      news: { fields: only('eyebrow', 'heading', 'subheading'), ...TITLE_ONLY },
+      stats: { fields: only('eyebrow', 'heading', 'subheading'), ...TITLE_ONLY },
+      projects: { fields: only('eyebrow', 'heading', 'subheading'), ...TITLE_ONLY },
+      testimonials: { fields: only('eyebrow'), ...TITLE_ONLY },
+      // Its own section: a heading, and a button that opens the recording.
+      video: { fields: only('heading', 'ctaLabel'), image: false },
+      // Text beside the enquiry form. No button of its own — the form has one.
+      contact: { fields: only('eyebrow', 'heading', 'subheading', 'body'), image: false },
+    },
     note:
-      'Početna strana je složen raspored: koristi tačno blokove „hero“, „video“ i ' +
-      '„contact“, a ostale ne prikazuje. Zato se ovde ne mogu dodavati novi blokovi.',
+      'Početna strana je složen raspored. Svaki blok ispod uređuje jednu njenu ' +
+      'sekciju, istim redom kojim se pojavljuju na strani. Kod sekcija koje imaju ' +
+      'svoj meni (usluge, vesti, brojke, reference, izjave) ovde se uređuje samo ' +
+      'naslov iznad njih. Novi blokovi se ovde ne mogu dodavati jer ih stranica ' +
+      'ne bi prikazala.',
   },
 };
+
+/**
+ * On a page with a fixed layout, list the blocks in the order the page
+ * renders them rather than by the stored sort order.
+ *
+ * The home page's rows were created at different times, so their sort order
+ * is the order they were added to the seed — hero, video, contact, then the
+ * five section titles. Reading down the admin would then bear no relation to
+ * reading down the site, which is the only map anyone has of what they are
+ * editing. Keys the page does not read sort last, next to their badge.
+ */
+function orderBlocks(blocks: Block[], fixed: FixedPage | undefined) {
+  if (!fixed) return blocks;
+  const keys = Object.keys(fixed.blocks);
+  const rank = (key: string) => {
+    const index = keys.indexOf(key);
+    return index === -1 ? keys.length : index;
+  };
+  return [...blocks].sort((a, b) => rank(a.blockKey) - rank(b.blockKey));
+}
 
 function readTranslations(rows: Translation[], fields: FieldConfig[]) {
   const values: Record<string, Record<string, FieldValue>> = {};
@@ -225,14 +334,27 @@ export default function PageEditor({ page }: { page: PageData }) {
           Ova stranica još nema blokova teksta. Dodajte prvi ispod.
         </p>
       ) : (
-        page.blocks.map((block) => (
+        orderBlocks(page.blocks, fixed).map((block) => {
+          const info = BLOCK_INFO[block.blockKey];
+          // Part of the page's fixed layout. There is no "add block" on
+          // these pages, so deleting one would remove it from the admin for
+          // good — the section would quietly revert to the text built into
+          // the code, with no way back short of re-seeding the database.
+          const layout = fixed?.blocks[block.blockKey];
+          const structural = layout !== undefined;
+          const fields = layout?.fields ?? BLOCK_FIELDS;
+
+          return (
           <Section
             key={block.id}
-            title={BLOCK_INFO[block.blockKey]?.label ?? block.blockKey}
-            unused={fixed ? !fixed.keys.includes(block.blockKey) : false}
-            description={BLOCK_INFO[block.blockKey]?.description ?? `Blok: ${block.blockKey}`}
-            fields={BLOCK_FIELDS}
-            initial={readTranslations(block.translations, BLOCK_FIELDS)}
+            title={info?.label ?? block.blockKey}
+            unused={fixed ? !structural : false}
+            description={info?.description ?? `Blok: ${block.blockKey}`}
+            fields={fields}
+            image={layout?.image ?? true}
+            video={layout?.video ?? true}
+            canHide={layout?.visible ?? true}
+            initial={readTranslations(block.translations, fields)}
             locale={locale}
             imageId={block.imageId}
             videoUrl={block.videoUrl}
@@ -241,9 +363,12 @@ export default function PageEditor({ page }: { page: PageData }) {
               adminApi.patch(`site/blocks/${block.id}`, { ...extra, translations })
             }
             onSaved={() => router.refresh()}
-            onDelete={() => adminApi.delete(`site/blocks/${block.id}`)}
+            {...(structural
+              ? {}
+              : { onDelete: () => adminApi.delete(`site/blocks/${block.id}`) })}
           />
-        ))
+          );
+        })
       )}
 
       {!fixed && (
@@ -258,6 +383,9 @@ function Section({
   description,
   unused = false,
   fields,
+  image: showImage = true,
+  video: showVideo = true,
+  canHide = true,
   initial,
   locale,
   imageId: initialImageId,
@@ -272,6 +400,11 @@ function Section({
   /** The page does not read this block's key, so it renders nowhere. */
   unused?: boolean;
   fields: FieldConfig[];
+  /** Whether this block's section renders an image, a video, and whether
+      hiding the block hides anything. */
+  image?: boolean;
+  video?: boolean;
+  canHide?: boolean;
   initial: Record<string, Record<string, FieldValue>>;
   locale: Locale;
   imageId?: string | null;
@@ -350,7 +483,7 @@ function Section({
             </p>
           )}
         </div>
-        {hasBlockExtras && (
+        {hasBlockExtras && canHide && (
           <label className="flex items-center gap-2 text-sm text-ts-muted cursor-pointer flex-shrink-0">
             <input
               type="checkbox"
@@ -378,7 +511,7 @@ function Section({
           </div>
         ))}
 
-        {hasBlockExtras && (
+        {hasBlockExtras && showImage && (
           <div className="md:col-span-2">
             <FormField
               field={{
@@ -397,7 +530,7 @@ function Section({
           </div>
         )}
 
-        {hasBlockExtras && (
+        {hasBlockExtras && showVideo && (
           <div className="md:col-span-2">
             <FormField
               field={{

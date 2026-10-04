@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
-import { mediaUrl, type ClientEntry, type TestimonialEntry } from "@/lib/api/public";
+import { sectionCopy } from "@/lib/section-copy";
+import { mediaUrl, type ClientEntry, type TestimonialEntry, type PageBlock } from "@/lib/api/public";
 
 /** "Ime · Uloga · Kompanija", skipping whatever is missing. */
 function attribution(entry: TestimonialEntry): string {
@@ -13,10 +14,14 @@ function attribution(entry: TestimonialEntry): string {
 export default function TestimonialSection({
   testimonials,
   clients,
+  block,
 }: {
   testimonials: TestimonialEntry[];
   clients: ClientEntry[];
+  /** Heading copy for this section, edited on the home page. */
+  block?: PageBlock | null;
 }) {
+  const copy = sectionCopy(block, { eyebrow: "Šta nas izdvaja" });
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -51,15 +56,18 @@ export default function TestimonialSection({
       style={{ background: "linear-gradient(180deg, #0B0F14 0%, #0C1219 100%)" }}>
 
       <div className="max-w-7xl mx-auto space-y-20">
-        {/* Header */}
-        <div className="reveal-hidden text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
-            <Icon name="StarIcon" size={14} className="text-ts-red" variant="solid" />
-            <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
-              Šta nas izdvaja
-            </span>
+        {/* Header. Cleared in the admin it goes entirely, rather than
+            leaving an empty box holding the section's vertical rhythm open. */}
+        {copy.eyebrow && (
+          <div className="reveal-hidden text-center space-y-4">
+            <div className="inline-flex items-center gap-2 bg-ts-surface border border-ts-border rounded-full px-4 py-1.5">
+              <Icon name="StarIcon" size={14} className="text-ts-red" variant="solid" />
+              <span className="text-xs font-bold text-ts-muted uppercase tracking-widest">
+                {copy.eyebrow}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Lead testimonial */}
         {lead && (
