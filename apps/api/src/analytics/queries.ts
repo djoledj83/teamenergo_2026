@@ -64,6 +64,7 @@ export async function getAnalytics(days: number, locale: Locale = DEFAULT_LOCALE
     referrers,
     locales,
     devices,
+    countries,
     downloadRows,
     inquiriesByService,
   ] = await Promise.all([
@@ -110,6 +111,11 @@ export async function getAnalytics(days: number, locale: Locale = DEFAULT_LOCALE
       _count: { _all: true },
     }),
     prisma.siteEvent.groupBy({
+      by: ['country'],
+      where: { kind: 'VIEW', createdAt: within, country: { not: null } },
+      _count: { _all: true },
+    }),
+    prisma.siteEvent.groupBy({
       by: ['path'],
       where: { kind: 'DOWNLOAD', createdAt: within },
       _count: { _all: true },
@@ -138,6 +144,7 @@ export async function getAnalytics(days: number, locale: Locale = DEFAULT_LOCALE
     referrers: topOf(referrers, 'referrerHost'),
     locales: topOf(locales, 'locale', 5),
     devices: topOf(devices, 'device', 5),
+    countries: named(topOf(countries, 'country', 8)),
     downloads: await labelDownloads(topOf(downloadRows, 'path', 10), locale),
     articles: await labelArticles(pages, locale),
     inquiriesByService: await labelServices(inquiriesByService, locale),
@@ -248,4 +255,23 @@ async function labelServices(
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
+}
+
+/**
+ * A country code is not a country to a reader. Intl does the naming, in
+ * Serbian Latin to match the admin, and falls back to the code for anything
+ * it does not recognise rather than printing nothing.
+ */
+const COUNTRY_NAMES = new Intl.DisplayNames(['sr-Latn'], { type: 'region' });
+
+function named(rows: Counted[]): Counted[] {
+  return rows.map((row) => {
+    let label: string | null = null;
+    try {
+      label = COUNTRY_NAMES.of(row.key) ?? null;
+    } catch {
+      label = null;
+    }
+    return { ...row, label: label && label !== row.key ? label : row.key };
+  });
 }

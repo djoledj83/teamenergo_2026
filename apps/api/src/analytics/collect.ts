@@ -1,6 +1,7 @@
 import { prisma } from '../db.js';
 import { logger } from '../logger.js';
 import { deviceOf, isBot, isPagePath, normalisePath, referrerHostOf, type EventInput } from './rules.js';
+import { countryOf } from './geo.js';
 
 /**
  * Writing an event, once the rules in ./rules.ts have decided it is worth
@@ -11,7 +12,12 @@ import { deviceOf, isBot, isPagePath, normalisePath, referrerHostOf, type EventI
 
 export async function recordEvent(
   input: EventInput,
-  context: { userAgent: string | undefined; selfHost: string | null },
+  context: {
+    userAgent: string | undefined;
+    selfHost: string | null;
+    /** Read to resolve a country and then discarded; never stored. */
+    ip: string | null;
+  },
 ): Promise<void> {
   if (isBot(context.userAgent)) return;
 
@@ -28,6 +34,9 @@ export async function recordEvent(
         locale: input.locale === 'sr' || input.locale === 'en' ? input.locale : null,
         referrerHost: referrerHostOf(input.referrer, context.selfHost),
         device: deviceOf(context.userAgent),
+        // The address goes in, a country code comes out, and the address is
+        // not part of what gets written.
+        country: await countryOf(context.ip),
       },
     });
   } catch (error) {

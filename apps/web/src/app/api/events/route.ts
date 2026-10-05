@@ -16,8 +16,26 @@ export const dynamic = 'force-dynamic';
  *
  * The visitor's user agent is passed through — the API reduces it to one of
  * three device classes and uses it to drop obvious crawlers, then discards
- * it. The IP is not forwarded and is not stored anywhere.
+ * it. The address is passed through too, for the same kind of reason: the API
+ * resolves it to a country against a local file and stores the country, never
+ * the address.
  */
+/**
+ * The visitor's address, forwarded to the API so it can resolve a country.
+ *
+ * This container is the only hop that sees it: nginx sets these headers, and
+ * the API is not publicly routable. The address is passed on, used to answer
+ * one question, and never stored on either side.
+ */
+function visitorIpHeaders(request: Request): Record<string, string> {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const real = request.headers.get('x-real-ip');
+  return {
+    ...(forwarded ? { 'X-Forwarded-For': forwarded } : {}),
+    ...(real ? { 'X-Real-IP': real } : {}),
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.text();
@@ -33,6 +51,7 @@ export async function POST(request: Request) {
         ...(request.headers.get('referer')
           ? { Referer: request.headers.get('referer')! }
           : {}),
+        ...visitorIpHeaders(request),
       },
       body,
       cache: 'no-store',

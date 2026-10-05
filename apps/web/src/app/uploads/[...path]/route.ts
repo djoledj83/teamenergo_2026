@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api/client';
 
 /** Fire and forget: the file must be served whether or not the count lands. */
-async function countDownload(path: string, userAgent: string | null): Promise<void> {
+async function countDownload(
+  path: string,
+  userAgent: string | null,
+  forwarded: Record<string, string>,
+): Promise<void> {
   try {
     await fetch(`${API_URL}/api/v1/public/events`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(userAgent ? { 'User-Agent': userAgent } : {}),
+        ...forwarded,
       },
       body: JSON.stringify({ kind: 'DOWNLOAD', path }),
       cache: 'no-store',
@@ -114,7 +119,14 @@ export async function GET(
     // ?download= is counted — without it the same URL is an <img> being
     // rendered, and every certificate badge in the footer would register as
     // a download of the certificate.
-    void countDownload(`/uploads/${safe}`, request.headers.get('user-agent'));
+    void countDownload(`/uploads/${safe}`, request.headers.get('user-agent'), {
+      ...(request.headers.get('x-forwarded-for')
+        ? { 'X-Forwarded-For': request.headers.get('x-forwarded-for')! }
+        : {}),
+      ...(request.headers.get('x-real-ip')
+        ? { 'X-Real-IP': request.headers.get('x-real-ip')! }
+        : {}),
+    });
 
     const fallback =
       requested.replace(/[^\w.\- ]+/g, '_').slice(0, 120).trim() || 'preuzimanje';

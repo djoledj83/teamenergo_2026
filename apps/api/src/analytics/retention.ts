@@ -27,6 +27,7 @@ const METRICS = [
   { metric: 'referrer', expression: `"referrerHost"`, where: `"kind" = 'VIEW' AND "referrerHost" IS NOT NULL` },
   { metric: 'locale', expression: `"locale"`, where: `"kind" = 'VIEW' AND "locale" IS NOT NULL` },
   { metric: 'device', expression: `"device"`, where: `"kind" = 'VIEW' AND "device" IS NOT NULL` },
+  { metric: 'country', expression: `"country"`, where: `"kind" = 'VIEW' AND "country" IS NOT NULL` },
 ] as const;
 
 export async function archiveAndTrim(now = new Date()): Promise<{ archived: number; removed: number }> {

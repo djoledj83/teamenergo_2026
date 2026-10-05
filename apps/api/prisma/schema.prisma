@@ -866,7 +866,12 @@ model SiteEvent {
   referrerHost String?
   /// 'mobile' | 'tablet' | 'desktop', derived before the user agent is
   /// discarded.
-  device    String?
+  device String?
+  /// ISO 3166-1 alpha-2, resolved from the visitor's address in memory and
+  /// stored instead of it. Country alone identifies nobody; the address it
+  /// came from is never written. Null when the lookup file is absent or the
+  /// address is private.
+  country String? @db.VarChar(2)
   createdAt DateTime @default(now())
 
   @@index([kind, createdAt])

@@ -1,0 +1,16 @@
+-- Where a visit came from, at country level.
+--
+-- This is the one place the analytics touch an IP address, and it is worth
+-- being precise about what changes. The address is READ, in memory, to answer
+-- one question — which country — and is then gone. It is not written here, not
+-- logged, and not sent anywhere: the lookup is a file on this server, so no
+-- third party ever sees a visitor's address.
+--
+-- What is stored is a two-letter country code. A country on its own does not
+-- identify anybody — roughly nine million people would answer "RS" — so the
+-- promise the rest of this table makes still holds.
+--
+-- Country only, deliberately. City-level data narrows a visitor far enough
+-- that, combined with a timestamp and a page, it starts to be identifying,
+-- and it would buy nothing a brochure site can act on.
+ALTER TABLE "site_event" ADD COLUMN "country" VARCHAR(2);

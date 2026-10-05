@@ -13,6 +13,7 @@ import { logger } from '../logger.js';
 import { asyncHandler } from '../middleware/auth.js';
 import { recordEvent } from '../analytics/collect.js';
 import { eventSchema } from '../analytics/rules.js';
+import { clientIpOf } from '../analytics/geo.js';
 import { publicWriteRateLimit } from '../middleware/rate-limit.js';
 import { parseQuery, validateBody } from '../middleware/validate.js';
 import * as queries from './queries.js';
@@ -246,6 +247,9 @@ publicRouter.post(
       await recordEvent(parsed.data, {
         userAgent: req.get('user-agent'),
         selfHost: hostOf(req.get('referer')) ?? hostOf(req.get('origin')),
+        // Forwarded by the web container, which is the only thing that can
+        // reach this API and the only hop that sees the visitor.
+        ip: clientIpOf(req.get('x-forwarded-for'), req.get('x-real-ip')),
       });
     }
     res.status(204).end();

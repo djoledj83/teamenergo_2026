@@ -25,6 +25,7 @@ export interface AnalyticsData {
   referrers: Entry[];
   locales: Entry[];
   devices: Entry[];
+  countries: Entry[];
   downloads: Entry[];
   articles: Entry[];
   inquiriesByService: Entry[];
@@ -98,15 +99,27 @@ export default function Analytics({ data }: { data: AnalyticsData }) {
         <List title="Preuzeti dokumenti" entries={data.downloads} empty="Još nema preuzimanja." />
         <List title="Najčitanije vesti" entries={data.articles} empty="Još nema pregleda vesti." />
         <List
-          title="Jezik"
-          entries={data.locales.map((e) => ({ ...e, label: LOCALE_LABELS[e.key] ?? e.key }))}
-          empty="—"
+          title="Odakle su posetioci"
+          entries={data.countries}
+          empty="Još nema podataka o zemljama."
+          note="Zemlja se određuje iz adrese posetioca na ovom serveru; sama adresa se ne čuva."
         />
-        <List
-          title="Uređaj"
-          entries={data.devices.map((e) => ({ ...e, label: DEVICE_LABELS[e.key] ?? e.key }))}
-          empty="—"
-        />
+
+        {/* Language and device share one column. Both are two or three rows
+            at most, and on their own each would be a card of mostly empty
+            space beside a list of eight countries. */}
+        <div className="space-y-6">
+          <List
+            title="Jezik"
+            entries={data.locales.map((e) => ({ ...e, label: LOCALE_LABELS[e.key] ?? e.key }))}
+            empty="—"
+          />
+          <List
+            title="Uređaj"
+            entries={data.devices.map((e) => ({ ...e, label: DEVICE_LABELS[e.key] ?? e.key }))}
+            empty="—"
+          />
+        </div>
       </div>
 
       <Bars title="Upiti po danu" series={data.series.inquiries} />
@@ -115,6 +128,21 @@ export default function Analytics({ data }: { data: AnalyticsData }) {
         entries={data.inquiriesByService}
         empty="Još nema upita u ovom periodu."
       />
+
+      {/* DB-IP's Lite database is CC-BY: free to use, with a credit where its
+          results are shown. This is that credit, and the honest place for it
+          is beside the numbers it produced. */}
+      <p className="text-xs text-ts-muted-2">
+        Podaci o zemljama:{' '}
+        <a
+          href="https://db-ip.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-ts-muted transition-colors">
+          IP Geolocation by DB-IP
+        </a>{' '}
+        (CC BY 4.0)
+      </p>
     </div>
   );
 }
