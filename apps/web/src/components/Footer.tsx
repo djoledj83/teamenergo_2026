@@ -273,7 +273,26 @@ export default function Footer({
             {badges.length > 0 && (
               <ul className="flex flex-wrap items-center gap-6">
                 {badges.map(({ doc, logo, file }) => {
-                  const badge = (
+                  // The badge is the picture at its own proportions, not a
+                  // fixed square with the picture letterboxed inside it.
+                  // That is what makes the rounded corners visible at all:
+                  // border-radius clips the element's box, and on an 80×80
+                  // box holding a wide banner the corners being rounded are
+                  // out in the empty space where nothing is painted.
+                  //
+                  // Same 80px width as before, so the row is unchanged for a
+                  // square logo. Needs the stored dimensions to know the
+                  // shape; without them the old square box is still right,
+                  // just not rounded.
+                  const badge = doc.logo?.width && doc.logo.height ? (
+                    <Image
+                      src={logo}
+                      alt={doc.logo.alt ?? doc.label}
+                      width={doc.logo.width}
+                      height={doc.logo.height}
+                      sizes="80px"
+                      className="block w-20 h-auto rounded" />
+                  ) : (
                     <span className="relative block w-20 h-20">
                       <Image
                         src={logo}
