@@ -91,30 +91,28 @@ function DocumentCard({ document }: { document: SiteDocumentDetail }) {
     <Link
       href={`/sertifikati/${document.slug}`}
       className="group flex flex-col h-full bg-ts-surface border border-ts-border rounded-3xl overflow-hidden hover:border-ts-red/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red">
-      {/* Edge to edge, like the news card: no padding, so the image meets the
-          card's own rounded corners instead of floating inside a dark margin.
+      {/* The news card's image area, exactly: same ratio, same object-cover,
+          no padding. The image fills the box and meets the card's own rounded
+          corners.
 
-          `object-contain`, not the news card's `object-cover`. A cover photo
-          can be cropped and still be a cover photo; these carry a logo and a
-          line of text, and cropping cuts the mark in half. Contain never
-          crops — at the cost of thin bands when an image's proportions differ
-          from the box, which is the honest trade for artwork.
-
-          4:1 because that is the shape of the banners in use. A squarer image
-          uploaded later shows in full with dark to either side rather than
-          being trimmed, which is the failure worth having. */}
+          `cover` rather than `contain` is the whole point. Contain never
+          crops, but it leaves bands wherever the image's proportions differ
+          from the box — and a band of card surface around the picture is the
+          dark margin this was meant to remove. Cover has no bands by
+          construction; the cost is that a banner much wider than 16:10 is
+          trimmed at the sides, so artwork wants its subject near the middle. */}
       {logo ? (
-        <div className="relative aspect-[16/4]">
+        <div className="relative aspect-[16/10]">
           <AppImage
             src={logo}
             alt={document.logo?.alt ?? document.label}
             fill
-            sizes="(max-width: 640px) 100vw, 20rem"
-            className="object-contain" />
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 24rem"
+            className="object-cover w-full h-full" />
         </div>
       ) : (
-        <div className="aspect-[16/4] flex items-center justify-center bg-ts-bg/40 text-ts-muted">
-          <Icon name="DocumentTextIcon" size={30} />
+        <div className="aspect-[16/10] flex items-center justify-center bg-ts-bg/40 text-ts-muted">
+          <Icon name="DocumentTextIcon" size={34} />
         </div>
       )}
 
