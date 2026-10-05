@@ -14,6 +14,7 @@ import {
   type ServiceSummary,
 } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -28,10 +29,7 @@ export async function generateMetadata({
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage("contact", locale as Locale).catch(() => null);
   if (!page?.meta) return {};
-  return {
-    title: page.meta.seoTitle ?? page.meta.title,
-    ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
-  };
+  return seoMetadata(page.meta, { title: page.meta.title });
 }
 
 export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {

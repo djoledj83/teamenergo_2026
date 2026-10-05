@@ -109,6 +109,13 @@ export interface ServiceSummary {
   title: string;
   category: string | null;
   summary: string | null;
+  /**
+   * Search-result copy, typed in the admin. Both fall back to the item's own
+   * title and summary, so leaving them blank is the same as before.
+   */
+  seoTitle: string | null;
+  seoDescription: string | null;
+
   body?: string | null;
   iconName: string | null;
   accent: string | null;
@@ -123,6 +130,13 @@ export interface ProjectSummary {
   location: string | null;
   tag: string | null;
   summary: string | null;
+  /**
+   * Search-result copy, typed in the admin. Both fall back to the item's own
+   * title and summary, so leaving them blank is the same as before.
+   */
+  seoTitle: string | null;
+  seoDescription: string | null;
+
   body?: string | null;
   year: number | null;
   accent: string | null;
@@ -140,6 +154,13 @@ export interface PostSummary {
   slug: string;
   title: string;
   excerpt: string | null;
+  /**
+   * Search-result copy, typed in the admin. Both fall back to the item's own
+   * title and summary, so leaving them blank is the same as before.
+   */
+  seoTitle: string | null;
+  seoDescription: string | null;
+
   publishedAt: string | null;
   coverImage: MediaRef | null;
   categories: Array<{ id: string; slug: string; name: string }>;

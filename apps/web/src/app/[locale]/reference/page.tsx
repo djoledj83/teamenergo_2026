@@ -10,6 +10,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getPage, getProjects, mediaUrl, type ProjectSummary } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -24,10 +25,7 @@ export async function generateMetadata({
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage("projects", locale as Locale).catch(() => null);
   if (!page?.meta) return {};
-  return {
-    title: page.meta.seoTitle ?? page.meta.title,
-    ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
-  };
+  return seoMetadata(page.meta, { title: page.meta.title });
 }
 
 export default async function ProjectsPage({ params }: { params: Promise<{ locale: string }> }) {

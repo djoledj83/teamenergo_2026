@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getPost, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 import RichText from "@/components/RichText";
 import PhotoGallery from "@/components/gallery/PhotoGallery";
 
@@ -47,7 +48,7 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const post = await load(locale, slug);
   if (!post) return {};
-  return { title: post.title, ...(post.excerpt ? { description: post.excerpt } : {}) };
+  return seoMetadata(post, { title: post.title, description: post.excerpt });
 }
 
 export default async function PostPage({

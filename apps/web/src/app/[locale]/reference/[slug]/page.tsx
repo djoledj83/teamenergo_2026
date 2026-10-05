@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getProject, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 import RichText from "@/components/RichText";
 import PhotoGallery from "@/components/gallery/PhotoGallery";
 
@@ -49,10 +50,7 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const project = await load(locale, slug);
   if (!project) return {};
-  return {
-    title: project.title,
-    ...(project.summary ? { description: project.summary } : {}),
-  };
+  return seoMetadata(project, { title: project.title, description: project.summary });
 }
 
 export default async function ProjectDetailPage({

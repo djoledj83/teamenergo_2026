@@ -8,6 +8,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getService, mediaUrl } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 import RichText from "@/components/RichText";
 
 /**
@@ -61,10 +62,7 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const service = await load(locale, slug);
   if (!service) return {};
-  return {
-    title: service.title,
-    ...(service.summary ? { description: service.summary } : {}),
-  };
+  return seoMetadata(service, { title: service.title, description: service.summary });
 }
 
 export default async function ServiceDetailPage({

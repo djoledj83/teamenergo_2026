@@ -11,6 +11,7 @@ import SocialIcon from "@/components/ui/SocialIcon";
 import { Link } from "@/i18n/navigation";
 import { getPage, getTeam, mediaUrl, type TeamMemberEntry } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -25,10 +26,7 @@ export async function generateMetadata({
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage("team", locale as Locale).catch(() => null);
   if (!page?.meta) return {};
-  return {
-    title: page.meta.seoTitle ?? page.meta.title,
-    ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
-  };
+  return seoMetadata(page.meta, { title: page.meta.title });
 }
 
 export default async function TeamPage({ params }: { params: Promise<{ locale: string }> }) {

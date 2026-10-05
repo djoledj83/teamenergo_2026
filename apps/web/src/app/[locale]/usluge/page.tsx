@@ -10,6 +10,7 @@ import AppImage from "@/components/ui/AppImage";
 import Icon from "@/components/ui/AppIcon";
 import { getPage, getServices, mediaUrl, type ServiceSummary } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -23,12 +24,7 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage("services", locale as Locale).catch(() => null);
-  if (page?.meta) {
-    return {
-      title: page.meta.seoTitle ?? page.meta.title,
-      ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
-    };
-  }
+  if (page?.meta) return seoMetadata(page.meta, { title: page.meta.title });
   const t = await getTranslations({ locale, namespace: "home" });
   return { title: t("servicesEyebrow") };
 }

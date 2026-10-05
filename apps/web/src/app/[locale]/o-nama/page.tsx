@@ -7,6 +7,7 @@ import PageHero from "@/components/PageHero";
 import PageBlocks from "@/components/PageBlocks";
 import { getPage, type PageContent } from "@/lib/api/public";
 import type { Locale } from "@teamenergo/shared";
+import { seoMetadata } from "@/lib/seo";
 
 /**
  * O nama.
@@ -37,10 +38,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const page = await load(locale);
   if (!page?.meta) return {};
-  return {
-    title: page.meta.seoTitle ?? page.meta.title,
-    ...(page.meta.seoDescription ? { description: page.meta.seoDescription } : {}),
-  };
+  return seoMetadata(page.meta, { title: page.meta.title });
 }
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
