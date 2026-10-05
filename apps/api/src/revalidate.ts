@@ -22,6 +22,7 @@ export const REVALIDATE_TAGS = {
   testimonials: 'testimonials',
   clients: 'clients',
   stats: 'stats',
+  documents: 'documents',
 } as const;
 
 export type RevalidateTag = (typeof REVALIDATE_TAGS)[keyof typeof REVALIDATE_TAGS];
@@ -55,7 +56,11 @@ const TAGS_BY_ENTITY: Record<string, RevalidateTag[]> = {
   // admin only appears once that tag is invalidated. An entity missing from
   // this map revalidates nothing at all and the editor waits out the hour
   // cache wondering why the save did not take.
-  SiteDocument: ['bootstrap'],
+  //
+  // 'documents' as well, since each one now has a page of its own: with only
+  // 'bootstrap' a renamed certificate changed in the footer and stayed stale
+  // on /sertifikati for an hour.
+  SiteDocument: ['bootstrap', 'documents'],
   Media: Object.values(REVALIDATE_TAGS),
 };
 

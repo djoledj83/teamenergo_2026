@@ -15,6 +15,7 @@ export const CACHE_TAGS = {
   pages: 'pages',
   services: 'services',
   projects: 'projects',
+  documents: 'documents',
   posts: 'posts',
   team: 'team',
   gallery: 'gallery',
@@ -66,8 +67,18 @@ export interface SiteDocumentEntry {
   id: string;
   label: string;
   description: string | null;
+  /** Null until the document has been saved once; it then has no page. */
+  slug: string | null;
   logo: MediaRef | null;
   file: MediaRef | null;
+}
+
+/** A document on its own page: everything in the footer entry, plus copy. */
+export interface SiteDocumentDetail extends Omit<SiteDocumentEntry, 'slug'> {
+  slug: string;
+  body: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
 }
 
 export interface Bootstrap {
@@ -347,6 +358,16 @@ export const getClients = (locale: Locale) =>
 
 export const getStats = (locale: Locale) =>
   get<{ items: StatEntry[] }>(`/stats${qs(locale)}`, CACHE_TAGS.stats);
+
+/**
+ * Documents that have a page. The footer's copies come from bootstrap, which
+ * includes the ones with no slug — this list is only what /sertifikati shows.
+ */
+export const getSiteDocuments = (locale: Locale) =>
+  get<{ items: SiteDocumentDetail[] }>(`/documents${qs(locale)}`, CACHE_TAGS.documents);
+
+export const getSiteDocument = (slug: string, locale: Locale) =>
+  getOptional<SiteDocumentDetail>(`/documents/${slug}${qs(locale)}`, CACHE_TAGS.documents);
 
 /** Builds a public URL for a stored media file. */
 export function mediaUrl(media: Pick<MediaRef, 'path'> | null | undefined): string | null {

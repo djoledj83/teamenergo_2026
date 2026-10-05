@@ -179,6 +179,26 @@ publicRouter.get(
   }),
 );
 
+// ── Documents and certificates ──────────────────────────────────────────
+
+publicRouter.get(
+  '/documents',
+  asyncHandler(async (req, res) => {
+    const { locale } = parseQuery(localeQuerySchema, req.query);
+    res.json({ items: await queries.listSiteDocuments(locale) });
+  }),
+);
+
+publicRouter.get(
+  '/documents/:slug',
+  asyncHandler(async (req, res) => {
+    const { locale } = parseQuery(localeQuerySchema, req.query);
+    const document = await queries.getSiteDocumentBySlug(req.params.slug as string, locale);
+    if (!document) throw HttpError.notFound('Dokument ne postoji');
+    res.json(document);
+  }),
+);
+
 // ── Social proof ────────────────────────────────────────────────────────
 
 publicRouter.get(

@@ -444,6 +444,10 @@ export const statsRouter: Router = createCollectionRouter<CreateStat, UpdateStat
 const siteDocumentCopySchema = z.object({
   label: z.string().min(1).max(160),
   description: z.string().max(400).nullable().optional(),
+  slug: slugSchema.optional(),
+  body: z.string().nullable().optional(),
+  seoTitle: z.string().max(200).nullable().optional(),
+  seoDescription: z.string().max(400).nullable().optional(),
 });
 
 const createSiteDocumentSchema = publishableSchema.extend({
@@ -499,6 +503,12 @@ export const siteDocumentsRouter: Router = createCollectionRouter<
             locale,
             label: copy.label,
             description: copy.description ?? null,
+            // Derived from the name when left blank, like every other
+            // sluggable entity. Without a slug the document has no page.
+            slug: resolveSlug(copy.slug, copy.label),
+            body: copy.body ?? null,
+            seoTitle: copy.seoTitle ?? null,
+            seoDescription: copy.seoDescription ?? null,
           },
         }),
       );
@@ -522,12 +532,23 @@ export const siteDocumentsRouter: Router = createCollectionRouter<
       await writeTranslations(input.translations, (locale, copy) =>
         tx.siteDocumentTranslation.upsert({
           where: { documentId_locale: { documentId: id, locale } },
-          update: { label: copy.label, description: copy.description ?? null },
+          update: {
+            label: copy.label,
+            description: copy.description ?? null,
+            slug: resolveSlug(copy.slug, copy.label),
+            body: copy.body ?? null,
+            seoTitle: copy.seoTitle ?? null,
+            seoDescription: copy.seoDescription ?? null,
+          },
           create: {
             documentId: id,
             locale,
             label: copy.label,
             description: copy.description ?? null,
+            slug: resolveSlug(copy.slug, copy.label),
+            body: copy.body ?? null,
+            seoTitle: copy.seoTitle ?? null,
+            seoDescription: copy.seoDescription ?? null,
           },
         }),
       );

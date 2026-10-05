@@ -792,15 +792,25 @@ model SiteDocument {
 }
 
 model SiteDocumentTranslation {
-  id          String  @id @default(cuid())
-  documentId  String
-  locale      String  @db.VarChar(5)
-  label       String
+  id         String  @id @default(cuid())
+  documentId String
+  locale     String  @db.VarChar(5)
+  label      String
+  /// One line, shown on hover in the footer and used as the fallback meta
+  /// description for the document's own page.
   description String?
+  /// Nullable: a document with no slug has no page, and its footer badge
+  /// links straight to the file. The admin fills it in from the label.
+  slug           String?
+  /// The page's own copy, rich text.
+  body           String? @db.Text
+  seoTitle       String?
+  seoDescription String?
 
   document SiteDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, locale])
+  @@unique([locale, slug])
   @@index([locale])
   @@map("site_document_translation")
 }

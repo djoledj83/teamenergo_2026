@@ -291,25 +291,45 @@ export const ADMIN_COLLECTIONS: AdminCollection[] = [
     fields: [
       { name: 'label', label: 'Naziv', type: 'text', translatable: true, required: true },
       {
+        name: 'slug',
+        label: 'Slug',
+        type: 'slug',
+        translatable: true,
+        help: 'Adresa stranice dokumenta, npr. /sertifikati/iso-9001. Ostavite prazno '
+          + 'da se napravi iz naziva.',
+      },
+      {
         name: 'description',
         label: 'Opis',
         type: 'textarea',
         translatable: true,
         span: 2,
-        help: 'Prikazuje se kao opis pri prelasku mišem. Nije obavezno.',
+        help: 'Jedna rečenica. Prikazuje se pri prelasku mišem u podnožju i kao opis '
+          + 'stranice u rezultatima pretrage ako SEO opis nije popunjen.',
+      },
+      {
+        name: 'body',
+        label: 'Tekst',
+        type: 'richtext',
+        translatable: true,
+        span: 2,
+        help: 'Sadržaj stranice dokumenta — šta sertifikat pokriva, kada je izdat, ko ga '
+          + 'je izdao. Prazno polje se ne prikazuje.',
       },
       {
         name: 'logoId',
         label: 'Logo (npr. ISO oznaka)',
         type: 'image',
-        help: 'Prikazuje se u podnožju. Ako je dodat i fajl, klik na logo ga preuzima.',
+        help: 'Prikazuje se u podnožju i na stranici dokumenta.',
       },
       {
         name: 'fileId',
         label: 'Fajl za preuzimanje',
         type: 'document',
-        help: 'PDF ili Word dokument. Bez loga se prikazuje kao dugme za preuzimanje.',
+        help: 'PDF ili Word dokument. Dugme za preuzimanje stoji na stranici dokumenta '
+          + 'i, ako nema loga, u podnožju.',
       },
+      ...seo,
     ],
   },
   {

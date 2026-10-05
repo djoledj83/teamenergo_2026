@@ -81,6 +81,9 @@ export async function getBootstrap(locale: Locale) {
           id: flat.id,
           label: flat.label,
           description: flat.description,
+          // Null for a document that has no page yet; the footer badge then
+          // links straight to the file, as it always did.
+          slug: flat.slug,
           logo: flattenMedia(document.logo, locale),
           file: flattenMedia(document.file, locale),
         };
@@ -570,5 +573,56 @@ export async function getHomepage(locale: Locale) {
     projects: projects.items,
     testimonials,
     clients,
+  };
+}
+
+// ── Documents and certificates ──────────────────────────────────────────
+
+const siteDocumentInclude = {
+  translations: true,
+  logo: { select: mediaSelect },
+  file: { select: mediaSelect },
+} as const;
+
+/**
+ * Every published document that has a page, newest arrangement first.
+ *
+ * Rows without a slug are left out rather than linked to a 404. They still
+ * appear in the footer — this list is only for the pages.
+ */
+export async function listSiteDocuments(locale: Locale) {
+  const documents = await prisma.siteDocument.findMany({
+    where: publishedOnly,
+    orderBy: { sortOrder: 'asc' },
+    include: siteDocumentInclude,
+  });
+
+  return documents
+    .map((document) => {
+      const flat = flattenEntity(document, locale);
+      if (!flat?.slug) return null;
+      return {
+        ...flat,
+        logo: flattenMedia(document.logo, locale),
+        file: flattenMedia(document.file, locale),
+      };
+    })
+    .filter((document): document is NonNullable<typeof document> => document !== null);
+}
+
+export async function getSiteDocumentBySlug(slug: string, locale: Locale) {
+  const document = await prisma.siteDocument.findFirst({
+    where: { ...publishedOnly, translations: { some: { slug } } },
+    include: siteDocumentInclude,
+  });
+  if (!document) return null;
+
+  const flat = flattenEntity(document, locale);
+  if (!flat) return null;
+
+  return {
+    ...flat,
+    logo: flattenMedia(document.logo, locale),
+    file: flattenMedia(document.file, locale),
   };
 }

@@ -4,11 +4,11 @@ import Icon from "@/components/ui/AppIcon";
 import SocialIcon from "@/components/ui/SocialIcon";
 import { Link } from "@/i18n/navigation";
 import {
-  downloadUrl,
   mediaUrl,
   type NavEntry,
   type SiteDocumentEntry,
 } from "@/lib/api/public";
+import { downloadFor } from "@/lib/download";
 
 interface FooterCompany {
   key: string;
@@ -92,41 +92,8 @@ function CompanyColumn({ company, heading }: { company: FooterCompany; heading: 
   );
 }
 
-/** "1,4 MB" — a reader deciding whether to tap a link wants the size. */
-function fileSize(bytes: number | null | undefined): string | null {
-  if (!bytes || bytes <= 0) return null;
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return `${mb.toFixed(1).replace(".", ",")} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
-
-const extensionOf = (path: string): string => {
-  const ext = path.split(".").pop();
-  return ext && ext.length <= 4 ? ext.toUpperCase() : "FAJL";
-};
-
 /** "Adresa, Grad, Država", skipping whatever has not been filled in. */
 const joined = (...parts: Array<string | null>) => parts.filter(Boolean).join(", ");
-
-/**
- * Everything the footer needs about a row's download, or null when it has
- * none.
- *
- * One place that answers "is there a file, and what do I call it", because
- * both the badge strip and the download list need the same three facts and
- * the alternative is a non-null assertion at each use — which is exactly how
- * a certification with a logo but no certificate took the whole page down
- * with "Cannot read properties of null".
- */
-function download(doc: SiteDocumentEntry) {
-  if (!doc.file) return null;
-  const extension = extensionOf(doc.file.path);
-  return {
-    href: downloadUrl(doc.file, `${doc.label}.${extension.toLowerCase()}`)!,
-    extension,
-    size: fileSize(doc.file.sizeBytes),
-  };
-}
 
 /**
  * Site footer.
@@ -222,13 +189,18 @@ export default function Footer({
   // throwing on `doc.file!.path`.
   const badges = documents.flatMap((doc) => {
     const logo = mediaUrl(doc.logo);
-    return logo ? [{ doc, logo, file: download(doc) }] : [];
+    return logo ? [{ doc, logo, file: downloadFor(doc) }] : [];
   });
   const downloads = documents.flatMap((doc) => {
     if (doc.logo) return [];
-    const file = download(doc);
+    const file = downloadFor(doc);
     return file ? [{ doc, file }] : [];
   });
+
+  // The listing is otherwise reachable only from a document's own page,
+  // which makes it a dead end for anyone browsing and invisible to a
+  // crawler following links.
+  const hasPages = documents.some((doc) => doc.slug);
 
   return (
     <footer className="border-t border-ts-border py-16 px-6">
@@ -291,8 +263,13 @@ export default function Footer({
 
         {documents.length > 0 && (
           <div className="border-t border-ts-border pt-10 pb-10 space-y-6">
-            {/* Badges first — a certification logo is read at a glance, and
-                the ones that have a certificate behind them link to it. */}
+            {/* Badges first — a certification logo is read at a glance.
+                A badge opens the document's own page when it has one, which
+                is what makes those pages reachable at all: a page nothing
+                links to is a page no search engine will rank. The download
+                button lives on that page. A document with no slug has no
+                page yet, so its badge still goes straight to the file, as
+                every badge did before. */}
             {badges.length > 0 && (
               <ul className="flex flex-wrap items-center gap-6">
                 {badges.map(({ doc, logo, file }) => {
@@ -306,12 +283,22 @@ export default function Footer({
                         className="object-contain" />
                     </span>
                   );
+                  const linkClass =
+                    "block opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red rounded";
+
                   return (
                     <li key={doc.id} title={doc.description ?? doc.label}>
-                      {file ? (
+                      {doc.slug ? (
+                        <Link
+                          href={`/sertifikati/${doc.slug}`}
+                          className={linkClass}
+                          aria-label={doc.label}>
+                          {badge}
+                        </Link>
+                      ) : file ? (
                         <a
                           href={file.href}
-                          className="block opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red rounded"
+                          className={linkClass}
                           aria-label={`${doc.label} — preuzmite dokument`}>
                           {badge}
                         </a>
@@ -322,6 +309,15 @@ export default function Footer({
                   );
                 })}
               </ul>
+            )}
+
+            {hasPages && (
+              <Link
+                href="/sertifikati"
+                className="inline-flex items-center gap-1.5 text-sm text-ts-muted hover:text-ts-fg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red rounded">
+                Svi dokumenti i sertifikati
+                <Icon name="ArrowRightIcon" size={13} className="text-ts-red" />
+              </Link>
             )}
 
             {downloads.length > 0 && (

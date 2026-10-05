@@ -223,6 +223,22 @@ const PAGES: Array<{
     sr: { title: 'Kontakt', seoTitle: 'Kontakt | Teamenergo' },
     en: { title: 'Contact', seoTitle: 'Contact | Teamenergo' },
   },
+  {
+    // /sertifikati — the listing the document pages hang off. Its title,
+    // intro and SEO are edited under Stranice like every other listing page.
+    key: 'documents',
+    sr: {
+      title: 'Dokumenti i sertifikati',
+      seoTitle: 'Dokumenti i sertifikati | Teamenergo',
+      seoDescription:
+        'Sertifikati, licence i dokumenta kompanije Teamenergo, dostupni za preuzimanje.',
+    },
+    en: {
+      title: 'Documents and certificates',
+      seoTitle: 'Documents and certificates | Teamenergo',
+      seoDescription: "Teamenergo's certificates, licences and company documents.",
+    },
+  },
 ];
 
 async function seedPages() {
