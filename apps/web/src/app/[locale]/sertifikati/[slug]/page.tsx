@@ -74,24 +74,25 @@ export default async function DocumentPage({
           </Link>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-10">
-            {/* A large square, straight on the background — no plate behind
-                it, like the footer badges and the cards on /sertifikati.
+            {/* A large square, filled. `object-cover` crops whatever does
+                not fit — a 1.55:1 mark loses about a third of its width,
+                split between the two sides — which is the trade for a solid
+                square with no bands around it. Artwork for this slot wants
+                its subject near the middle, or to be square to begin with.
 
-                The box is square; the picture inside it is not forced to be.
-                `object-contain` means a certificate mark is shown whole and
-                centred in that square rather than cropped to fill it, which
-                on a logo cuts the artwork. The square is what sets the size
-                — the earlier 4:1 strip left a mark 64px tall beside a 52px
-                heading, which read as an afterthought. */}
+                overflow-hidden because the rounding has to clip the picture:
+                a radius on a box whose content overflows it does nothing on
+                its own. Smaller than the cards' rounded-3xl, since this is a
+                plate on the page rather than a card. */}
             {logo && (
-              <div className="relative w-56 sm:w-72 lg:w-80 aspect-square flex-shrink-0">
+              <div className="relative w-56 sm:w-72 lg:w-80 aspect-square flex-shrink-0 rounded-2xl overflow-hidden">
                 <AppImage
                   src={logo}
                   alt={document.logo?.alt ?? document.label}
                   fill
                   sizes="(max-width: 640px) 14rem, (max-width: 1024px) 18rem, 20rem"
                   priority
-                  className="object-contain" />
+                  className="object-cover" />
               </div>
             )}
 
