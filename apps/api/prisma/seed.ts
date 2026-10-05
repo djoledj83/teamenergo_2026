@@ -130,11 +130,27 @@ const SETTINGS: Record<string, unknown> = {
   'contact.country': 'Srbija',
   'company.name': 'Teamenergo d.o.o.',
   'company.foundedYear': null, // PLACEHOLDER: hero said "since (pa br godina)"
+  // PLACEHOLDER: the company's own registration numbers.
+  'company.pib': '',
+  'company.registrationNumber': '',
+  // The second company, on its own address. Its footer column appears once
+  // subsidiary.name is filled in; until then every key here is empty and the
+  // footer looks exactly as it does with one company.
+  'subsidiary.name': '',
+  'subsidiary.email': '',
+  'subsidiary.phone': '',
+  'subsidiary.address': '',
+  'subsidiary.city': '',
+  'subsidiary.country': '',
+  'subsidiary.pib': '',
+  'subsidiary.registrationNumber': '',
   'social.linkedin': '',
   'social.instagram': '',
   'social.facebook': '',
-  'map.lat': null,
-  'map.lng': null,
+  // No map.lat / map.lng. The map reads the address above, so a pair of
+  // coordinates was two more things to keep in sync and nothing read them;
+  // seeding them only put two orphan keys under "Ostalo" on every fresh
+  // install. Rows already in a database can be cleared there.
 };
 
 async function seedSettings() {

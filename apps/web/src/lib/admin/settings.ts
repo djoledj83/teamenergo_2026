@@ -19,10 +19,34 @@ export interface SettingsGroup {
   fields: Array<FieldConfig & { key: string }>;
 }
 
+/**
+ * PIB and matični broj, for whichever company.
+ *
+ * Text rather than number: a matični broj is eight digits and can begin with
+ * a zero, which a number field would eat, and neither is ever added up.
+ */
+const REGISTRATION_FIELDS = (prefix: string): SettingsGroup['fields'] => [
+  {
+    key: `${prefix}.pib`,
+    name: `${prefix}.pib`,
+    label: 'PIB',
+    type: 'text',
+    help: 'Poreski identifikacioni broj — 9 cifara.',
+  },
+  {
+    key: `${prefix}.registrationNumber`,
+    name: `${prefix}.registrationNumber`,
+    label: 'Matični broj',
+    type: 'text',
+    help: '8 cifara.',
+  },
+];
+
 export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     title: 'Kontakt',
-    description: 'Prikazuje se u podnožju sajta i na stranici Kontakt.',
+    description:
+      'Podaci glavne kompanije. Prikazuju se u podnožju sajta i na stranici Kontakt.',
     fields: [
       { key: 'contact.email', name: 'contact.email', label: 'Email', type: 'email' },
       {
@@ -35,6 +59,38 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: 'contact.address', name: 'contact.address', label: 'Adresa', type: 'text', span: 2 },
       { key: 'contact.city', name: 'contact.city', label: 'Grad', type: 'text' },
       { key: 'contact.country', name: 'contact.country', label: 'Država', type: 'text' },
+      // Kept under company.* because they identify the company rather than
+      // the way to reach it — but shown here, beside the address, because
+      // that is where somebody filling in the company's particulars looks.
+      ...REGISTRATION_FIELDS('company'),
+    ],
+  },
+  {
+    title: 'Povezana kompanija',
+    description:
+      'Druga kompanija, na svojoj adresi. Njena kolona u podnožju se pojavljuje tek ' +
+      'kada je Naziv popunjen — ostavite sva polja prazna ako postoji samo jedna kompanija.',
+    fields: [
+      {
+        key: 'subsidiary.name',
+        name: 'subsidiary.name',
+        label: 'Naziv',
+        type: 'text',
+        span: 2,
+        help: 'Naslov kolone u podnožju. Dok je prazan, cela kolona se ne prikazuje.',
+      },
+      { key: 'subsidiary.email', name: 'subsidiary.email', label: 'Email', type: 'email' },
+      { key: 'subsidiary.phone', name: 'subsidiary.phone', label: 'Telefon', type: 'text' },
+      {
+        key: 'subsidiary.address',
+        name: 'subsidiary.address',
+        label: 'Adresa',
+        type: 'text',
+        span: 2,
+      },
+      { key: 'subsidiary.city', name: 'subsidiary.city', label: 'Grad', type: 'text' },
+      { key: 'subsidiary.country', name: 'subsidiary.country', label: 'Država', type: 'text' },
+      ...REGISTRATION_FIELDS('subsidiary'),
     ],
   },
   {

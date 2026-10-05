@@ -60,7 +60,8 @@ export default function SettingsForm({ initial }: { initial: Settings }) {
         <div>
           <h1 className="admin-title">Podešavanja</h1>
           <p className="admin-subtitle">
-            Podaci koji se pojavljuju na celom sajtu — kontakt, društvene mreže, mapa.
+            Podaci koji se pojavljuju na celom sajtu — kontakt, podaci kompanija i
+            društvene mreže.
           </p>
         </div>
         <div className="flex items-center gap-3">
