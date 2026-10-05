@@ -76,13 +76,13 @@ function CompanyColumn({ company, heading }: { company: FooterCompany; heading: 
         <dl className="text-xs text-ts-muted space-y-1">
           {pib && (
             <div className="flex gap-1.5">
-              <dt className="font-semibold">PIB</dt>
+              <dt className="font-semibold">PIB:</dt>
               <dd>{pib}</dd>
             </div>
           )}
           {registrationNumber && (
             <div className="flex gap-1.5">
-              <dt className="font-semibold">Matični broj</dt>
+              <dt className="font-semibold">Matični broj:</dt>
               <dd>{registrationNumber}</dd>
             </div>
           )}
