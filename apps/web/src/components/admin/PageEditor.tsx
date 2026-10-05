@@ -8,6 +8,7 @@ import Icon from '@/components/ui/AppIcon';
 import { adminApi, AdminApiError } from '@/lib/admin/api';
 import { parseVideoEmbed, VIDEO_URL_HELP } from '@teamenergo/shared';
 import { ADMIN_LOCALES, type FieldConfig } from '@/lib/admin/collections';
+import { pagePath } from '@/lib/admin/pages';
 import FormField, { type FieldValue } from './FormField';
 
 /**
@@ -275,6 +276,7 @@ export default function PageEditor({ page }: { page: PageData }) {
   const heading =
     (page.translations.find((t) => t.locale === DEFAULT_LOCALE)?.title as string) ?? page.key;
   const fixed = FIXED_BLOCK_PAGES[page.key];
+  const path = pagePath(page.key);
   // The home page renders no PageHero, so it has no slot for an intro.
   const pageFields = page.key === 'home' ? PAGE_FIELDS_NO_INTRO : PAGE_FIELDS;
 
@@ -289,7 +291,20 @@ export default function PageEditor({ page }: { page: PageData }) {
             Stranice
           </Link>
           <h1 className="admin-title truncate">{heading}</h1>
-          <p className="admin-subtitle">/{page.key}</p>
+          {/* The address, not the key. They differ for every page on this
+              site, and printing the key here sent somebody to a 404. */}
+          {path ? (
+            <a
+              href={path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-subtitle inline-flex items-center gap-1.5 hover:text-ts-fg transition-colors">
+              {path}
+              <Icon name="ArrowTopRightOnSquareIcon" size={12} />
+            </a>
+          ) : (
+            <p className="admin-subtitle">Nema stranice na sajtu ({page.key})</p>
+          )}
         </div>
 
         <div className="inline-flex rounded-full border border-ts-border bg-ts-surface p-1">

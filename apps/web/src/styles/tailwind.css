@@ -187,12 +187,13 @@ body {
 }
 
 .ticker-track {
-  /* 43s, up from 30s: the strip now travels at 70% of its old speed —
-     measured at 13.6 px/s against 19.6 px/s before. The duration is fixed
-     while the track's width is not, so adding clients still speeds it up:
-     the loop covers more ground in the same time. Worth revisiting if the
-     client list grows much past a dozen. */
-  animation: ticker 43s linear infinite;
+  /* 86s. It started at 30s, went to 43s, and was still too quick; this is
+     half that speed again — about 6.8 px/s against the original 19.6, so
+     roughly a third of where it began. The duration is fixed while the
+     track's width is not, so adding clients speeds it up again: the loop
+     covers more ground in the same time. Worth revisiting if the client
+     list grows much past a dozen. */
+  animation: ticker 86s linear infinite;
   white-space: nowrap;
 }
 

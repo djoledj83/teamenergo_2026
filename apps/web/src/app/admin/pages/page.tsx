@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { readTokens } from '@/lib/auth/session';
 import { apiFetch } from '@/lib/api/client';
 import Icon from '@/components/ui/AppIcon';
+import { pagePath } from '@/lib/admin/pages';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export default async function PagesIndex() {
               <div className="min-w-0">
                 <p className="font-semibold text-ts-fg truncate">{sr?.title ?? page.key}</p>
                 <p className="text-xs text-ts-muted mt-0.5">
-                  /{page.key} · {page.blocks.length}{' '}
+                  {pagePath(page.key) ?? `bez stranice (${page.key})`} · {page.blocks.length}{' '}
                   {page.blocks.length === 1 ? 'blok' : 'blokova'}
                 </p>
               </div>
