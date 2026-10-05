@@ -147,8 +147,10 @@ function ProjectCard({
             <h3 className="font-display text-2xl lg:text-3xl font-bold text-ts-fg leading-tight">
               {project.title}
             </h3>
+            {/* Cut at three lines, like the same card on /reference — the
+                two show the same projects and should read alike. */}
             {project.summary && (
-              <p className="text-ts-muted leading-relaxed">{project.summary}</p>
+              <p className="text-ts-muted leading-relaxed line-clamp-3">{project.summary}</p>
             )}
           </div>
 

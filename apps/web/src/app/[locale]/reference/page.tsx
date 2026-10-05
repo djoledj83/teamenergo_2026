@@ -94,7 +94,11 @@ function ProjectCard({ project, reverse }: { project: ProjectSummary; reverse: b
             <h2 className="font-display text-2xl lg:text-3xl font-bold text-ts-fg leading-tight">
               {project.title}
             </h2>
-            {project.summary && <p className="text-ts-muted leading-relaxed">{project.summary}</p>}
+            {/* Three lines on the card, the whole summary on the project's
+                own page — the same cut the service, news and team cards use. */}
+            {project.summary && (
+              <p className="text-ts-muted leading-relaxed line-clamp-3">{project.summary}</p>
+            )}
           </div>
 
           {project.metrics.length > 0 && (
