@@ -5,6 +5,7 @@ import { connectDb } from './db.js';
 import { env } from './env.js';
 import { logger } from './logger.js';
 import { ensureUploadDir } from './media/storage.js';
+import { startRetentionJob } from './analytics/retention.js';
 
 // Confirm the database before accepting traffic, so a misconfigured
 // connection is one clear line at startup rather than a stack trace on every
@@ -52,8 +53,14 @@ const server = app.listen(env.API_PORT, () => {
   logger.info(`API listening on port ${env.API_PORT} (${env.NODE_ENV})`);
 });
 
+// Archives day totals, drops raw events past the retention window, and
+// clears the IP and user agent from settled enquiries. Runs now and every
+// six hours; see analytics/retention.ts for why it lives in this process.
+const retention = startRetentionJob();
+
 function shutdown(signal: string) {
   logger.info(`${signal} received, shutting down`);
+  clearInterval(retention);
   server.close(() => {
     logger.info('server closed');
     process.exit(0);

@@ -50,6 +50,11 @@ enum InquiryStatus {
   ARCHIVED
 }
 
+enum SiteEventKind {
+  VIEW
+  DOWNLOAD
+}
+
 /// Active content languages. Drives the language tabs in the admin UI.
 model Locale {
   code      String  @id @db.VarChar(5)
@@ -418,7 +423,6 @@ model Post {
   publishedAt  DateTime?
   isPublished  Boolean   @default(false)
   isFeatured   Boolean   @default(false)
-  viewCount    Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -837,4 +841,54 @@ model Inquiry {
   @@index([status, createdAt])
   @@index([email])
   @@map("inquiry")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Analytics
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One page view or one file download.
+///
+/// What is NOT here is the point: no IP address, no user agent string, no
+/// cookie, no visitor identifier. Nothing in this table identifies a person,
+/// so there is no consent banner to show and nothing to leak. The price is
+/// that it counts views rather than visitors — without an identifier the two
+/// cannot be distinguished, and the admin says so rather than implying
+/// otherwise.
+model SiteEvent {
+  id   String        @id @default(cuid())
+  kind SiteEventKind
+  /// A page path for a view, a stored media path for a download.
+  path String
+  locale String? @db.VarChar(5)
+  /// Host only — "google.com", never the referring URL, which can carry
+  /// search terms and session tokens.
+  referrerHost String?
+  /// 'mobile' | 'tablet' | 'desktop', derived before the user agent is
+  /// discarded.
+  device    String?
+  createdAt DateTime @default(now())
+
+  @@index([kind, createdAt])
+  @@index([createdAt])
+  @@map("site_event")
+}
+
+/// Day totals, written before the raw rows are trimmed.
+///
+/// The retention job deliberately forgets the detail; this keeps the shape of
+/// the history, so a year-on-year comparison still works after the events
+/// behind it are gone.
+model AnalyticsDaily {
+  id     String   @id @default(cuid())
+  day    DateTime @db.Date
+  /// 'view' | 'download' | 'page' | 'referrer' | 'locale' | 'device'
+  metric String
+  /// What is being counted within that metric, or '' for a plain total.
+  key    String
+  count  Int
+
+  @@unique([day, metric, key])
+  @@index([metric, day])
+  @@map("analytics_daily")
 }

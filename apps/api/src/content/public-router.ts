@@ -11,6 +11,8 @@ import { prisma } from '../db.js';
 import { HttpError } from '../errors.js';
 import { logger } from '../logger.js';
 import { asyncHandler } from '../middleware/auth.js';
+import { recordEvent } from '../analytics/collect.js';
+import { eventSchema } from '../analytics/rules.js';
 import { publicWriteRateLimit } from '../middleware/rate-limit.js';
 import { parseQuery, validateBody } from '../middleware/validate.js';
 import * as queries from './queries.js';
@@ -224,6 +226,40 @@ publicRouter.get(
     res.json({ items: await queries.listStats(locale) });
   }),
 );
+
+// ── Analytics ───────────────────────────────────────────────────────────
+
+/**
+ * A page view or a download, from the site itself.
+ *
+ * 204 always, and never an error: this is a counter, and a visitor must not
+ * see a failed request in their console because a write was rejected. The
+ * decision about what is worth storing — and what is dropped unread — is in
+ * analytics/collect.ts.
+ */
+publicRouter.post(
+  '/events',
+  publicWriteRateLimit,
+  asyncHandler(async (req, res) => {
+    const parsed = eventSchema.safeParse(req.body);
+    if (parsed.success) {
+      await recordEvent(parsed.data, {
+        userAgent: req.get('user-agent'),
+        selfHost: hostOf(req.get('referer')) ?? hostOf(req.get('origin')),
+      });
+    }
+    res.status(204).end();
+  }),
+);
+
+const hostOf = (value: string | undefined): string | null => {
+  if (!value) return null;
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+};
 
 // ── Contact form ────────────────────────────────────────────────────────
 

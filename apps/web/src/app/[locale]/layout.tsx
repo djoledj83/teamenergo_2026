@@ -4,6 +4,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Analytics from '@/components/Analytics';
 import { getBootstrap, type Bootstrap } from '@/lib/api/public';
 import type { Locale } from '@teamenergo/shared';
 
@@ -60,6 +61,8 @@ export default async function LocaleLayout({
           documents={bootstrap.documents}
         />
       </div>
+      {/* Renders nothing; counts the page once per path. */}
+      <Analytics locale={locale} />
     </NextIntlClientProvider>
   );
 }

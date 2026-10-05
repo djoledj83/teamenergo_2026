@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api/client';
 
+/** Fire and forget: the file must be served whether or not the count lands. */
+async function countDownload(path: string, userAgent: string | null): Promise<void> {
+  try {
+    await fetch(`${API_URL}/api/v1/public/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(userAgent ? { 'User-Agent': userAgent } : {}),
+      },
+      body: JSON.stringify({ kind: 'DOWNLOAD', path }),
+      cache: 'no-store',
+    });
+  } catch {
+    /* a counter is never a reason to fail a download */
+  }
+}
+
 /**
  * Serves uploaded media by proxying to the API.
  *
@@ -91,6 +108,14 @@ export async function GET(
    */
   const requested = new URL(request.url).searchParams.get('download');
   if (requested !== null) {
+    // Counted here rather than from the browser: this route runs for every
+    // download and no ad blocker can decline it, which makes it the one
+    // number on the analytics screen that is not an undercount. Only
+    // ?download= is counted — without it the same URL is an <img> being
+    // rendered, and every certificate badge in the footer would register as
+    // a download of the certificate.
+    void countDownload(`/uploads/${safe}`, request.headers.get('user-agent'));
+
     const fallback =
       requested.replace(/[^\w.\- ]+/g, '_').slice(0, 120).trim() || 'preuzimanje';
     headers.set(

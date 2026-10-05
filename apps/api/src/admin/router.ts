@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { DEFAULT_LOCALE } from '@teamenergo/shared';
 import { prisma } from '../db.js';
 import {
   asyncHandler,
@@ -22,6 +23,7 @@ import { projectsRouter } from './projects-router.js';
 import { postCategoriesRouter, postsRouter } from './posts-router.js';
 import { galleryRouter } from './gallery-router.js';
 import { auditRouter } from './audit-router.js';
+import { getAnalytics } from '../analytics/queries.js';
 
 export const adminRouter: Router = Router();
 
@@ -69,6 +71,22 @@ adminRouter.get(
       counts: { services, projects, posts, team, albums, media, newInquiries },
       recentInquiries,
     });
+  }),
+);
+
+/**
+ * Everything the Analitika screen draws, in one request.
+ *
+ * `days` is clamped rather than validated-and-rejected: the only caller is
+ * the screen's own range buttons, and a nonsense value should give the
+ * default view, not an error page.
+ */
+adminRouter.get(
+  '/analytics',
+  asyncHandler(async (req, res) => {
+    const asked = Number(req.query.days);
+    const days = [7, 30, 90].includes(asked) ? asked : 30;
+    res.json(await getAnalytics(days, DEFAULT_LOCALE));
   }),
 );
 

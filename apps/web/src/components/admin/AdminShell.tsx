@@ -28,6 +28,7 @@ const FIXED_LINKS: NavLink[] = [
   { href: '/admin/pages', label: 'Stranice', icon: 'DocumentTextIcon', group: 'site' },
   { href: '/admin/navigation', label: 'Navigacija', icon: 'Bars3Icon', group: 'site' },
   { href: '/admin/settings', label: 'Podešavanja', icon: 'Cog6ToothIcon', group: 'site' },
+  { href: '/admin/analytics', label: 'Analitika', icon: 'ChartBarIcon', group: 'system' },
   { href: '/admin/inquiries', label: 'Upiti', icon: 'InboxIcon', group: 'system' },
   { href: '/admin/audit', label: 'Istorija izmena', icon: 'ClockIcon', group: 'system' },
 ];

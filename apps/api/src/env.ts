@@ -46,6 +46,15 @@ const envSchema = z.object({
 
   DEFAULT_LOCALE: z.string().default('sr'),
   SUPPORTED_LOCALES: z.string().default('sr,en'),
+
+  // How long raw analytics events are kept. Day totals are archived before
+  // they go, so the history survives the detail being forgotten. Both have
+  // defaults, so an existing .env needs no change.
+  ANALYTICS_RETENTION_DAYS: z.coerce.number().int().positive().default(180),
+  // How long after an enquiry arrives its IP and user agent are kept. They
+  // exist to tell a real enquiry from a flood; a month is long enough to
+  // settle that and nothing reads them afterwards.
+  INQUIRY_PII_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 const parsed = envSchema.safeParse(process.env);
