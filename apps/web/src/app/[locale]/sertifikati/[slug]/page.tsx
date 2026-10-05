@@ -74,17 +74,17 @@ export default async function DocumentPage({
           </Link>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-8">
-            {/* On a light panel: these marks are drawn for white paper and
-                disappear into the page's own background. */}
+            {/* Straight on the background, like the footer badges and the
+                cards on /sertifikati — no plate behind it. */}
             {logo && (
-              <div className="relative w-32 h-32 flex-shrink-0 rounded-2xl bg-white/95 p-4">
+              <div className="relative w-32 h-32 flex-shrink-0">
                 <AppImage
                   src={logo}
                   alt={document.logo?.alt ?? document.label}
                   fill
                   sizes="8rem"
                   priority
-                  className="object-contain p-2" />
+                  className="object-contain" />
               </div>
             )}
 

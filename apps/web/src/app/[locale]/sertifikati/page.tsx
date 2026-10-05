@@ -91,10 +91,12 @@ function DocumentCard({ document }: { document: SiteDocumentDetail }) {
     <Link
       href={`/sertifikati/${document.slug}`}
       className="group flex flex-col h-full bg-ts-surface border border-ts-border rounded-3xl overflow-hidden hover:border-ts-red/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red">
-      {/* A badge sits on a light panel: these marks are drawn for white paper
-          and vanish into the page's own background. */}
+      {/* No panel behind the badge. These marks are drawn for white paper, so
+          a light plate was the cautious choice — but the footer has shown the
+          same images straight on the dark background since the site went up
+          and they read fine, which settles it better than caution did. */}
       {logo ? (
-        <div className="relative h-36 bg-white/95 flex items-center justify-center p-6">
+        <div className="relative h-36 flex items-center justify-center p-6">
           <AppImage
             src={logo}
             alt={document.logo?.alt ?? document.label}
