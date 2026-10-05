@@ -26,6 +26,32 @@ interface AppImageProps {
  * why the previous version bypassed next/image entirely for external URLs and
  * lost optimisation for every image on the site.
  */
+/**
+ * The `object-*` utilities out of the caller's className, for the <img>.
+ *
+ * In `fill` mode the caller's className goes on the wrapper div, where
+ * object-fit and object-position mean nothing — and the image carried a
+ * hardcoded `object-cover`. So every caller asking for anything else was
+ * silently overridden: certificate badges asked for `object-contain` and were
+ * cropped, and team photos asked for `object-top` so a portrait is anchored
+ * at the head and were centred instead, cutting faces through the middle.
+ *
+ * It went unnoticed because the majority of callers ask for `object-cover`,
+ * which is what they were being given regardless.
+ *
+ * Defaults to `object-cover` when the caller names no fit, so every existing
+ * call site keeps the behaviour it has today.
+ */
+const OBJECT_FIT = /\bobject-(contain|cover|fill|none|scale-down)\b/;
+const OBJECT_POSITION =
+  /\bobject-(bottom|center|left-bottom|left-top|left|right-bottom|right-top|right|top)\b/;
+
+function objectClasses(className: string): string {
+  return [className.match(OBJECT_FIT)?.[0] ?? 'object-cover', className.match(OBJECT_POSITION)?.[0]]
+    .filter(Boolean)
+    .join(' ');
+}
+
 export default function AppImage({
   src,
   alt,
@@ -91,7 +117,7 @@ export default function AppImage({
           onError={handleError}
           onLoad={() => setIsLoading(false)}
           onClick={onClick}
-          className={`absolute inset-0 w-full h-full object-cover ${stateClasses}`}
+          className={`absolute inset-0 w-full h-full ${objectClasses(className)} ${stateClasses}`}
         />
       </div>
     );

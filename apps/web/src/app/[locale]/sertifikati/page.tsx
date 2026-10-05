@@ -91,12 +91,20 @@ function DocumentCard({ document }: { document: SiteDocumentDetail }) {
     <Link
       href={`/sertifikati/${document.slug}`}
       className="group flex flex-col h-full bg-ts-surface border border-ts-border rounded-3xl overflow-hidden hover:border-ts-red/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ts-red">
-      {/* No panel behind the badge. These marks are drawn for white paper, so
-          a light plate was the cautious choice — but the footer has shown the
-          same images straight on the dark background since the site went up
-          and they read fine, which settles it better than caution did. */}
+      {/* Edge to edge, like the news card: no padding, so the image meets the
+          card's own rounded corners instead of floating inside a dark margin.
+
+          `object-contain`, not the news card's `object-cover`. A cover photo
+          can be cropped and still be a cover photo; these carry a logo and a
+          line of text, and cropping cuts the mark in half. Contain never
+          crops — at the cost of thin bands when an image's proportions differ
+          from the box, which is the honest trade for artwork.
+
+          4:1 because that is the shape of the banners in use. A squarer image
+          uploaded later shows in full with dark to either side rather than
+          being trimmed, which is the failure worth having. */}
       {logo ? (
-        <div className="relative h-36 flex items-center justify-center p-6">
+        <div className="relative aspect-[16/4]">
           <AppImage
             src={logo}
             alt={document.logo?.alt ?? document.label}
@@ -105,8 +113,8 @@ function DocumentCard({ document }: { document: SiteDocumentDetail }) {
             className="object-contain" />
         </div>
       ) : (
-        <div className="h-36 flex items-center justify-center bg-ts-bg/40 text-ts-muted">
-          <Icon name="DocumentTextIcon" size={34} />
+        <div className="aspect-[16/4] flex items-center justify-center bg-ts-bg/40 text-ts-muted">
+          <Icon name="DocumentTextIcon" size={30} />
         </div>
       )}
 

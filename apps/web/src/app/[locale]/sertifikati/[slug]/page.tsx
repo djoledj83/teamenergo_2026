@@ -75,9 +75,12 @@ export default async function DocumentPage({
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-8">
             {/* Straight on the background, like the footer badges and the
-                cards on /sertifikati — no plate behind it. */}
+                cards on /sertifikati — no plate behind it.
+
+                Wide rather than square: the images in use are 4:1 banners,
+                and a square box shrank one to the width of its own height. */}
             {logo && (
-              <div className="relative w-32 h-32 flex-shrink-0">
+              <div className="relative w-64 aspect-[16/4] flex-shrink-0">
                 <AppImage
                   src={logo}
                   alt={document.logo?.alt ?? document.label}
