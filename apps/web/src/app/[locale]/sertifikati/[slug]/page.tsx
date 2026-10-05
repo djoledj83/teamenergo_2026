@@ -73,19 +73,23 @@ export default async function DocumentPage({
             Dokumenti i sertifikati
           </Link>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-8">
-            {/* Straight on the background, like the footer badges and the
-                cards on /sertifikati — no plate behind it.
+          <div className="flex flex-col sm:flex-row sm:items-center gap-10">
+            {/* A large square, straight on the background — no plate behind
+                it, like the footer badges and the cards on /sertifikati.
 
-                Wide rather than square: the images in use are 4:1 banners,
-                and a square box shrank one to the width of its own height. */}
+                The box is square; the picture inside it is not forced to be.
+                `object-contain` means a certificate mark is shown whole and
+                centred in that square rather than cropped to fill it, which
+                on a logo cuts the artwork. The square is what sets the size
+                — the earlier 4:1 strip left a mark 64px tall beside a 52px
+                heading, which read as an afterthought. */}
             {logo && (
-              <div className="relative w-64 aspect-[16/4] flex-shrink-0">
+              <div className="relative w-56 sm:w-72 lg:w-80 aspect-square flex-shrink-0">
                 <AppImage
                   src={logo}
                   alt={document.logo?.alt ?? document.label}
                   fill
-                  sizes="8rem"
+                  sizes="(max-width: 640px) 14rem, (max-width: 1024px) 18rem, 20rem"
                   priority
                   className="object-contain" />
               </div>
