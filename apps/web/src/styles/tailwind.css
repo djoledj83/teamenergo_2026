@@ -188,7 +188,7 @@ body {
 
 .ticker-track {
   /* 43s, up from 30s: the strip now travels at 70% of its old speed —
-     measured at 15.0 px/s against 19.6 px/s before. The duration is fixed
+     measured at 13.6 px/s against 19.6 px/s before. The duration is fixed
      while the track's width is not, so adding clients still speeds it up:
      the loop covers more ground in the same time. Worth revisiting if the
      client list grows much past a dozen. */
